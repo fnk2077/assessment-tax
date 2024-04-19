@@ -46,8 +46,21 @@ func (h *Handler) TaxCalculate(c echo.Context) error {
 }
 
 func taxCalculator(req TaxRequest) TaxResponse {
+	const deduction = 60000.0
 	income := req.TotalIncome
-	income -= 60000
+	income -= deduction
+
+	if len(req.Allowances) > 0 {
+		for _, allowance := range req.Allowances {
+			if allowance.AllowanceType == "donation" {
+				if allowance.Amount > 100000.0 {
+					income -= 100000.0
+				} else {
+					income -= allowance.Amount
+				}
+			}
+		}
+	}
 
 	taxRate := 0.0
 
