@@ -42,10 +42,10 @@ func (h *Handler) TaxCalculate(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
 	}
-	return c.JSON(http.StatusOK, calculateTax(req))
+	return c.JSON(http.StatusOK, taxCalculator(req))
 }
 
-func calculateTax(req TaxRequest) TaxResponse {
+func taxCalculator(req TaxRequest) TaxResponse {
 	income := req.TotalIncome
 	income -= 60000
 
