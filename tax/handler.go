@@ -67,6 +67,6 @@ func taxCalculator(req TaxRequest) TaxResponse {
 		income -= 2000000
         taxRate = 0.35
     }
-	tax := income * taxRate
+	tax := (income * taxRate) - req.Wht
 	return TaxResponse{Tax: tax}
 }
