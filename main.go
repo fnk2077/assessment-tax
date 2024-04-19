@@ -28,6 +28,7 @@ func main() {
 	})
 
 	e.POST("/tax/calculations", taxHandler.TaxCalculate)
+	e.POST("/admin/deductions/personal", taxHandler.ChangePersonalDeduction)
 
 	go func() {
 		if err := e.Start(":" + os.Getenv("PORT")); err != nil && err != http.ErrServerClosed {

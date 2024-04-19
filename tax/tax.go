@@ -21,4 +21,9 @@ type TaxResponse struct {
 	TaxLevels []TaxLevel `json:"taxLevel"`
 }
 
+type Deduction struct {
+	Personal float64 `json:"personalDeduction"`
+	KReceipt float64 `json:"kReceipt"`
+}
+
 

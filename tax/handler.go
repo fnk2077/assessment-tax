@@ -15,7 +15,8 @@ type Handler struct {
 }
 
 type Storer interface {
-	// PersonalDeduction() (error)
+	PersonalDeduction() (Deduction)
+	ChangePersonalDeduction(float64)
 }
 
 func New(db Storer) *Handler {
@@ -43,14 +44,26 @@ func (h *Handler) TaxCalculate(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
 	}
-	return c.JSON(http.StatusOK, taxCalculator(req))
+	deductions := h.store.PersonalDeduction()
+	return c.JSON(http.StatusOK, taxCalculator(req, deductions))
 }
 
-func taxCalculator(req TaxRequest) TaxResponse {
+func (h *Handler) ChangePersonalDeduction(c echo.Context) error {
+    req := struct {
+		Amount float64 `json:"amount"`
+	}{}
+    if err := c.Bind(&req); err != nil {
+        return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
+    }
+    h.store.ChangePersonalDeduction(req.Amount)
+    response := map[string]float64{"personalDeduction": req.Amount}
+    return c.JSON(http.StatusOK, response)
+}
+
+func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 	var taxResponse TaxResponse
-	const deduction = 60000.0
 	income := req.TotalIncome
-	income -= deduction
+	income -= deduction.Personal
 
 	if len(req.Allowances) > 0 {
 		for _, allowance := range req.Allowances {
