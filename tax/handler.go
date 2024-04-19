@@ -2,6 +2,7 @@ package tax
 
 import (
 	"errors"
+	"math"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -46,6 +47,7 @@ func (h *Handler) TaxCalculate(c echo.Context) error {
 }
 
 func taxCalculator(req TaxRequest) TaxResponse {
+	var taxResponse TaxResponse
 	const deduction = 60000.0
 	income := req.TotalIncome
 	income -= deduction
@@ -62,24 +64,33 @@ func taxCalculator(req TaxRequest) TaxResponse {
 		}
 	}
 
-	taxRate := 0.0
+	taxLevels := []struct {
+		min   float64
+		max   float64
+		rate  float64
+		level string
+	}{
+		{0, 150000, 0, "0 - 150,000"},
+		{150000, 500000, 0.10, "150,001 - 500,000"},
+		{500000, 1000000, 0.15, "500,001 - 1,000,000"},
+		{1000000, 2000000, 0.20, "1,000,001 - 2,000,000"},
+		{2000000, math.MaxFloat64, 0.30, "2,000,001 ขึ้นไป"},
+	}
 
-    switch {
-    case income <= 150000:
-        taxRate = 0
-    case income <= 500000:
-        taxRate = 0.10
-		income -= 150000
-    case income <= 1000000:
-        taxRate = 0.15
-		income -= 500000
-    case income <= 2000000:
-		income -= 1000000
-        taxRate = 0.20
-    default:
-		income -= 2000000
-        taxRate = 0.35
-    }
-	tax := (income * taxRate) - req.Wht
-	return TaxResponse{Tax: tax}
+	for _, bracket := range taxLevels {
+		if income > bracket.min && income <= bracket.max {
+			taxResponse.Tax = ((income - bracket.min) * bracket.rate) - req.Wht
+			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
+				Level: bracket.level,
+				Tax: ((income - bracket.min) * bracket.rate) - req.Wht,
+			})
+		} else {
+			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
+				Level: bracket.level,
+				Tax: 0.0,
+			})
+		}
+	}
+
+	return taxResponse
 }
