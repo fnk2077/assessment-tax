@@ -33,14 +33,14 @@ K-Tax เป็น Application คำนวนภาษี ที่ให้ผ
 ## Non-Functional Requirement
 - มี `Unit Test` ครอบคลุม
 - ใช้ `go module`
-- ใช้ go module `go mod init github.com/<your github name>/assessment-tax`
-- ใช้ go 1.21 or above
+- ใช้ go module `go mod init github.com/<your github name>/assessment-tax` :white_check_mark:
+- ใช้ go 1.21 or above :white_check_mark:
 - ใช้ `PostgreSQL`
-- API port _MUST_ get from `environment variable` name `PORT`
-- database url _MUST_ get from environment variable name `DATABASE_URL`
+- API port _MUST_ get from `environment variable` name `PORT`:white_check_mark:
+- database url _MUST_ get from environment variable name `DATABASE_URL` :white_check_mark:
   - ตัวอย่าง `DATABASE_URL=host={REPLACE_ME} port=5432 user={REPLACE_ME} password={REPLACE_ME} dbname={REPLACE_ME} sslmode=disable`
 - ใช้ `docker compose` สำหรับต่อ Database
-- API support `Graceful Shutdown`
+- API support `Graceful Shutdown` :white_check_mark:
   - เช่น ถ้ามีการกด `Ctrl + C` จะ print `shutting down the server`
 - มี Dockerfile สำหรับ build image และเป็น `Multi-stage build`
 - ใช้ `HTTP Method` และ `HTTP Status Code` อย่างเหมาะสม
