@@ -1,14 +1,13 @@
 package tax
 
 import (
-	"bytes"
 	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -65,36 +64,54 @@ func (h *Handler) ChangePersonalDeduction(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// ReadTaxCSV reads CSV data from request and returns an array of TaxRequest
 func (h *Handler) ReadTaxCSV(c echo.Context) error {
-    // Read the body of the request
-    body, err := ioutil.ReadAll(c.Request().Body)
-    if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, "Error reading request body")
-    }
+	var taxCSVRequests []TaxCSVRequest
 
-    // Parse the CSV data
-    reader := csv.NewReader(bytes.NewReader(body))
-    var results [][]string
-    for {
-        // read one row from csv
-        record, err := reader.Read()
-        if err == io.EOF {
-            break
-        }
-        if err != nil {
-            return echo.NewHTTPError(http.StatusBadRequest, "Error parsing CSV")
-        }
+	file, err := c.FormFile("taxFile")
+	if err != nil {
+		return err
+	}
 
-        // add record to result set
-        results = append(results, record)
-    }
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
 
-    // Print the CSV data
-    fmt.Println(results)
+	reader := csv.NewReader(src)
+	_, _ = reader.Read()
 
-    // Respond with a success message
-    return c.String(http.StatusOK, "CSV data received and printed successfully\n")
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		totalIncome, err := strconv.ParseFloat(record[0], 64)
+		if err != nil {
+			return err
+		}
+		wht, err := strconv.ParseFloat(record[1], 64)
+		if err != nil {
+			return err
+		}
+		donation, err := strconv.ParseFloat(record[2], 64)
+		if err != nil {
+			return err
+		}
+
+		taxCSVRequests = append(taxCSVRequests, TaxCSVRequest{
+			TotalIncome: totalIncome,
+			Wht:         wht,
+			Donation:    donation,
+		})
+	}
+ 
+	fmt.Println(taxCSVRequests)
+	return c.JSON(http.StatusOK, taxCSVRequests)
 }
 
 
