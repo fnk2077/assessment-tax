@@ -26,4 +26,13 @@ type Deduction struct {
 	KReceipt float64 `json:"kReceipt"`
 }
 
+type TaxCSVResponse struct{
+	Taxes []TaxCSVDetail `json:"taxes"`
+}
+
+type TaxCSVDetail struct {
+	TotalIncome float64     `json:"totalIncome"`
+	Tax float64     `json:"tax"`
+}
+
 

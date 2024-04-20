@@ -1,7 +1,12 @@
 package tax
 
 import (
+	"bytes"
+	"encoding/csv"
 	"errors"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"math"
 	"net/http"
 
@@ -15,7 +20,7 @@ type Handler struct {
 }
 
 type Storer interface {
-	PersonalDeduction() (Deduction)
+	PersonalDeduction() Deduction
 	ChangePersonalDeduction(float64)
 }
 
@@ -49,16 +54,49 @@ func (h *Handler) TaxCalculate(c echo.Context) error {
 }
 
 func (h *Handler) ChangePersonalDeduction(c echo.Context) error {
-    req := struct {
+	req := struct {
 		Amount float64 `json:"amount"`
 	}{}
-    if err := c.Bind(&req); err != nil {
-        return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
-    }
-    h.store.ChangePersonalDeduction(req.Amount)
-    response := map[string]float64{"personalDeduction": req.Amount}
-    return c.JSON(http.StatusOK, response)
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
+	}
+	h.store.ChangePersonalDeduction(req.Amount)
+	response := map[string]float64{"personalDeduction": req.Amount}
+	return c.JSON(http.StatusOK, response)
 }
+
+// ReadTaxCSV reads CSV data from request and returns an array of TaxRequest
+func (h *Handler) ReadTaxCSV(c echo.Context) error {
+    // Read the body of the request
+    body, err := ioutil.ReadAll(c.Request().Body)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Error reading request body")
+    }
+
+    // Parse the CSV data
+    reader := csv.NewReader(bytes.NewReader(body))
+    var results [][]string
+    for {
+        // read one row from csv
+        record, err := reader.Read()
+        if err == io.EOF {
+            break
+        }
+        if err != nil {
+            return echo.NewHTTPError(http.StatusBadRequest, "Error parsing CSV")
+        }
+
+        // add record to result set
+        results = append(results, record)
+    }
+
+    // Print the CSV data
+    fmt.Println(results)
+
+    // Respond with a success message
+    return c.String(http.StatusOK, "CSV data received and printed successfully\n")
+}
+
 
 func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 	var taxResponse TaxResponse
@@ -95,12 +133,12 @@ func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 			taxResponse.Tax = ((income - bracket.min) * bracket.rate) - req.Wht
 			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
 				Level: bracket.level,
-				Tax: ((income - bracket.min) * bracket.rate) - req.Wht,
+				Tax:   ((income - bracket.min) * bracket.rate) - req.Wht,
 			})
 		} else {
 			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
 				Level: bracket.level,
-				Tax: 0.0,
+				Tax:   0.0,
 			})
 		}
 	}
