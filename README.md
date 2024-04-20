@@ -32,10 +32,10 @@ K-Tax เป็น Application คำนวนภาษี ที่ให้ผ
 
 ## Non-Functional Requirement
 - มี `Unit Test` ครอบคลุม
-- ใช้ `go module`
+- ใช้ `go module` :white_check_mark:
 - ใช้ go module `go mod init github.com/<your github name>/assessment-tax` :white_check_mark:
 - ใช้ go 1.21 or above :white_check_mark:
-- ใช้ `PostgreSQL`
+- ใช้ `PostgreSQL` :white_check_mark:
 - API port _MUST_ get from `environment variable` name `PORT`:white_check_mark:
 - database url _MUST_ get from environment variable name `DATABASE_URL` :white_check_mark:
   - ตัวอย่าง `DATABASE_URL=host={REPLACE_ME} port=5432 user={REPLACE_ME} password={REPLACE_ME} dbname={REPLACE_ME} sslmode=disable`

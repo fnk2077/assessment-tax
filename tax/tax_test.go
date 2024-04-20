@@ -13,10 +13,14 @@ func TestTaxCalculator(t *testing.T) {
 		want := 0.0
 		req := TaxRequest{
 			TotalIncome: 149000.0,
+		} 
+
+		deduction := Deduction{
+			Personal: 60000.0,
 		}
 
 		//Act
-		got := taxCalculator(req)
+		got := taxCalculator(req , deduction)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -29,8 +33,12 @@ func TestTaxCalculator(t *testing.T) {
 			TotalIncome: 210001.0,
 		}
 
+		deduction := Deduction{
+			Personal: 60000.0,
+		}
+
 		//Act
-		got := taxCalculator(req)
+		got := taxCalculator(req, deduction)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -43,9 +51,11 @@ func TestTaxCalculator(t *testing.T) {
 			TotalIncome: 500000.0,
 			Wht: 25000.0,
 		}
-
+		deduction := Deduction{
+			Personal: 60000.0,
+		}
 		//Act
-		got := taxCalculator(req)
+		got := taxCalculator(req, deduction)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -64,8 +74,12 @@ func TestTaxCalculator(t *testing.T) {
 			},
 		}
 
+		deduction := Deduction{
+			Personal: 0.0,
+		}
+
 		//Act
-		got := taxCalculator(req)
+		got := taxCalculator(req, deduction)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
