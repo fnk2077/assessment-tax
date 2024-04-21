@@ -126,7 +126,11 @@ func (h *Handler) ReadTaxCSV(c echo.Context) error {
 		deductions := h.store.PersonalDeduction()
 		taxResponse := taxCalculator(req, deductions)
 		taxCSVResponseDetail.TotalIncome = taxCSVRequest.TotalIncome
-		taxCSVResponseDetail.Tax = taxResponse.Tax
+		if ( taxResponse.Tax >= 0 ){
+			taxCSVResponseDetail.Tax = taxResponse.Tax
+		} else {
+			taxCSVResponseDetail.TaxRefund = -taxResponse.Tax
+		}
 		taxCSVResponse.Taxes = append(taxCSVResponse.Taxes, taxCSVResponseDetail)
 	}
 	return c.JSON(http.StatusOK, taxCSVResponse)
@@ -164,11 +168,20 @@ func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 
 	for _, bracket := range taxLevels {
 		if income > bracket.min && income <= bracket.max {
-			taxResponse.Tax = ((income - bracket.min) * bracket.rate) - req.Wht
-			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
-				Level: bracket.level,
-				Tax:   ((income - bracket.min) * bracket.rate) - req.Wht,
-			})
+			if ((income - bracket.min) * bracket.rate) - req.Wht >= 0 {
+				taxResponse.Tax = ((income - bracket.min) * bracket.rate) - req.Wht
+				taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
+					Level: bracket.level,
+					Tax:   ((income - bracket.min) * bracket.rate) - req.Wht,
+				})
+			} else {
+				taxResponse.TaxRefund = -(((income - bracket.min) * bracket.rate) - req.Wht)
+				taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
+					Level: bracket.level,
+					TaxRefund:   ((income - bracket.min) * bracket.rate) - req.Wht,
+				})
+			}
+
 		} else {
 			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
 				Level: bracket.level,

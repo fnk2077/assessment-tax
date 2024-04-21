@@ -6,8 +6,9 @@ type Allowance struct {
 }
 
 type TaxLevel struct {
-	Level string `json:"level"`
-	Tax   float64 `json:"tax"`
+	Level string  `json:"level"`
+	Tax   float64 `json:"tax,omitempty"`
+	TaxRefund float64 `json:"taxRefund,omitempty"`
 }
 
 type TaxRequest struct {
@@ -17,7 +18,8 @@ type TaxRequest struct {
 }
 
 type TaxResponse struct {
-	Tax float64 `json:"tax"`
+	Tax       float64    `json:"tax,omitempty"`
+	TaxRefund float64    `json:"taxRefund,omitempty"`
 	TaxLevels []TaxLevel `json:"taxLevel"`
 }
 
@@ -26,19 +28,18 @@ type Deduction struct {
 	KReceipt float64 `json:"kReceipt"`
 }
 
-type TaxCSVRequest struct{
-	TotalIncome float64     `json:"totalIncome"`
-	Wht         float64     `json:"wht"`
-	Donation   float64     `json:"donation"`
+type TaxCSVRequest struct {
+	TotalIncome float64 `json:"totalIncome"`
+	Wht         float64 `json:"wht"`
+	Donation    float64 `json:"donation"`
 }
 
-type TaxCSVResponse struct{
+type TaxCSVResponse struct {
 	Taxes []TaxCSVResponseDetail `json:"taxes"`
 }
 
 type TaxCSVResponseDetail struct {
-	TotalIncome float64     `json:"totalIncome"`
-	Tax float64     `json:"tax"`
+	TotalIncome float64 `json:"totalIncome"`
+	Tax         float64 `json:"tax,omitempty"`
+	TaxRefund   float64 `json:"taxRefund,omitempty"`
 }
-
-
