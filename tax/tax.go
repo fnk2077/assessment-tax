@@ -33,10 +33,10 @@ type TaxCSVRequest struct{
 }
 
 type TaxCSVResponse struct{
-	Taxes []TaxCSVDetail `json:"taxes"`
+	Taxes []TaxCSVResponseDetail `json:"taxes"`
 }
 
-type TaxCSVDetail struct {
+type TaxCSVResponseDetail struct {
 	TotalIncome float64     `json:"totalIncome"`
 	Tax float64     `json:"tax"`
 }

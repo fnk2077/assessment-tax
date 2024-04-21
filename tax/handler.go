@@ -3,7 +3,6 @@ package tax
 import (
 	"encoding/csv"
 	"errors"
-	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -109,11 +108,29 @@ func (h *Handler) ReadTaxCSV(c echo.Context) error {
 			Donation:    donation,
 		})
 	}
- 
-	fmt.Println(taxCSVRequests)
-	return c.JSON(http.StatusOK, taxCSVRequests)
-}
 
+	var taxCSVResponse TaxCSVResponse
+	
+	for _, taxCSVRequest := range taxCSVRequests {
+		var taxCSVResponseDetail TaxCSVResponseDetail
+		req := TaxRequest{
+			TotalIncome: taxCSVRequest.TotalIncome,
+			Wht:         taxCSVRequest.Wht,
+			Allowances: []Allowance{
+				{
+					AllowanceType: "donation",
+					Amount:        taxCSVRequest.Donation,
+				},
+			},
+		}
+		deductions := h.store.PersonalDeduction()
+		taxResponse := taxCalculator(req, deductions)
+		taxCSVResponseDetail.TotalIncome = taxCSVRequest.TotalIncome
+		taxCSVResponseDetail.Tax = taxResponse.Tax
+		taxCSVResponse.Taxes = append(taxCSVResponse.Taxes, taxCSVResponseDetail)
+	}
+	return c.JSON(http.StatusOK, taxCSVResponse)
+}
 
 func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 	var taxResponse TaxResponse
