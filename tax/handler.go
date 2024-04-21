@@ -63,6 +63,19 @@ func (h *Handler) ChangePersonalDeduction(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+func (h *Handler) ChangeKReciept(c echo.Context) error {
+	req := struct {
+		Amount float64 `json:"amount"`
+	}{}
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
+	}
+	h.store.ChangePersonalDeduction(req.Amount)
+	response := map[string]float64{"kReceipt": req.Amount}
+	return c.JSON(http.StatusOK, response)
+
+}	
+
 func (h *Handler) ReadTaxCSV(c echo.Context) error {
 	var taxCSVRequests []TaxCSVRequest
 
@@ -137,6 +150,15 @@ func (h *Handler) ReadTaxCSV(c echo.Context) error {
 	return c.JSON(http.StatusOK, taxCSVResponse)
 }
 
+func initDefaultDeduction() Deduction {
+
+	return Deduction{
+		Personal: 50000.0,
+		KReceipt: 15000.0,
+	}
+
+}
+
 func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 	var taxResponse TaxResponse
 	income := req.TotalIncome
@@ -147,6 +169,13 @@ func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 			if allowance.AllowanceType == "donation" {
 				if allowance.Amount > 100000.0 {
 					income -= 100000.0
+				} else {
+					income -= allowance.Amount
+				}
+			}
+			if allowance.AllowanceType == "k-receipt" {
+				if allowance.Amount > 50000.0 {
+					income -= 50000.0
 				} else {
 					income -= allowance.Amount
 				}
