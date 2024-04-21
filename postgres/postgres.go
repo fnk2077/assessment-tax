@@ -68,7 +68,7 @@ func migrationQuery(tableName string) string {
         return `CREATE TABLE IF NOT EXISTS deductions (
             id SERIAL PRIMARY KEY,
             personal_deduction FLOAT,
-            k_receipt FLOAT
+            k_receipt_deduction FLOAT
         );`
     default:
         return ""

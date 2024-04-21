@@ -41,3 +41,8 @@ func (p *Postgres) ChangePersonalDeduction(deduction float64) {
 	query := `INSERT INTO deductions (personal_deduction) VALUES ($1)`
 	p.Db.Exec(query, deduction)
 }
+
+func (p *Postgres) ChangeKReceiptDeduction(deduction float64) {
+	query := `INSERT INTO deductions (personal_deduction) VALUES ($1)`
+	p.Db.Exec(query, deduction)
+}
