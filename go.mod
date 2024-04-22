@@ -3,7 +3,7 @@ module github.com/fnk2077/assessment-tax
 go 1.21.9
 
 require (
-	github.com/labstack/echo/v4 v4.11.4
+	github.com/labstack/echo/v4 v4.12.0
 	github.com/stretchr/testify v1.9.0
 )
 
@@ -14,10 +14,8 @@ require (
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	golang.org/x/time v0.5.0 // indirect
 )
 
 require (

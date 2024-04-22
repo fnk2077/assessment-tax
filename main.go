@@ -10,8 +10,10 @@ import (
 
 	"github.com/fnk2077/assessment-tax/postgres"
 	"github.com/fnk2077/assessment-tax/tax"
+	auth "github.com/fnk2077/assessment-tax/middleware"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -23,14 +25,19 @@ func main() {
 	taxHandler := tax.New(p)
 
 	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, Go Bootcamp!")
 	})
 
 	e.POST("/tax/calculations", taxHandler.TaxCalculate)
-	e.POST("/admin/deductions/personal", taxHandler.ChangePersonalDeduction)
-	e.POST("/admin/deductions/k-receipt", taxHandler.ChangeKReciept)
 	e.POST("/tax/calculations/upload-csv", taxHandler.ReadTaxCSV)
+
+	g := e.Group("/admin")
+	g.Use(middleware.BasicAuth(auth.AuthMiddleware))
+	g.POST("/deductions/personal", taxHandler.ChangePersonalDeduction)
+	g.POST("/deductions/k-receipt", taxHandler.ChangeKReciept)
 
 	go func() {
 		if err := e.Start(":" + os.Getenv("PORT")); err != nil && err != http.ErrServerClosed {
