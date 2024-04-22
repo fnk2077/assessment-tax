@@ -168,7 +168,7 @@ func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 			}
 			if allowance.AllowanceType == "k-receipt" {
 				if allowance.Amount > deduction.MaxKReceipt {
-					income -= 50000.0
+					income -= deduction.MaxKReceipt
 				} else {
 					income -= allowance.Amount
 				}
@@ -189,29 +189,43 @@ func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 		{2000000, math.MaxFloat64, 0.30, "2,000,001 ขึ้นไป"},
 	}
 
+	// totalTax := 0.0
+	// for _, bracket := range taxLevels {
+	// 	if income > bracket.min && income <= bracket.max {
+	// 		totalTax = ((income - bracket.min) * bracket.rate) - req.Wht
+	// 		break
+	// 	}
+
+	// }
+
+	totalTax := 0.0
 	for _, bracket := range taxLevels {
 		if income > bracket.min && income <= bracket.max {
-			if ((income-bracket.min)*bracket.rate)-req.Wht >= 0 {
-				taxResponse.Tax = ((income - bracket.min) * bracket.rate) - req.Wht
-				taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
-					Level: bracket.level,
-					Tax:   ((income - bracket.min) * bracket.rate) - req.Wht,
-				})
-			} else {
-				taxResponse.TaxRefund = -(((income - bracket.min) * bracket.rate) - req.Wht)
-				taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
-					Level:     bracket.level,
-					Tax:       0.0,
-					TaxRefund: ((income - bracket.min) * bracket.rate) - req.Wht,
-				})
-			}
 
+			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
+				Level: bracket.level,
+				Tax:   ((income - bracket.min) * bracket.rate),
+			})
+			totalTax += ((income - bracket.min) * bracket.rate)
+
+		} else if income <= bracket.min {
+			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
+				Level:     bracket.level,
+				Tax:       0.0,
+			})
 		} else {
 			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
 				Level: bracket.level,
-				Tax:   0.0,
+				Tax:   ((bracket.max - bracket.min) * bracket.rate),
 			})
+			totalTax += ((bracket.max - bracket.min) * bracket.rate)
 		}
+	}
+
+	if totalTax-req.Wht >= 0 {
+		taxResponse.Tax = totalTax - req.Wht
+	} else {
+		taxResponse.TaxRefund = -(totalTax - req.Wht)
 	}
 
 	return taxResponse
