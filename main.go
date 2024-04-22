@@ -29,6 +29,7 @@ func main() {
 
 	e.POST("/tax/calculations", taxHandler.TaxCalculate)
 	e.POST("/admin/deductions/personal", taxHandler.ChangePersonalDeduction)
+	e.POST("/admin/deductions/k-receipt", taxHandler.ChangeKReciept)
 	e.POST("/tax/calculations/upload-csv", taxHandler.ReadTaxCSV)
 
 	go func() {

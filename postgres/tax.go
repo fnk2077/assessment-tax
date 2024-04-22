@@ -10,7 +10,7 @@ type Allowance struct {
 }
 
 type TaxLevel struct {
-	Level string `json:"level"`
+	Level string  `json:"level"`
 	Tax   float64 `json:"tax"`
 }
 
@@ -21,28 +21,32 @@ type TaxRequest struct {
 }
 
 type TaxResponse struct {
-	Tax float64 `json:"tax"`
+	Tax       float64    `json:"tax"`
 	TaxLevels []TaxLevel `json:"taxLevel"`
 }
 
 type Deduction struct {
 	Personal float64 `json:"personalDeduction"`
-	KReceipt float64 `json:"kReceipt"`
+	MaxKReceipt float64 `json:"kReceipt"`
 }
 
-func (p *Postgres) PersonalDeduction() tax.Deduction {
-    var deduction tax.Deduction
-    query := `SELECT personal_deduction FROM deductions ORDER BY id DESC LIMIT 1`
-    p.Db.QueryRow(query).Scan(&deduction.Personal)
-    return deduction
+func (p *Postgres) GetDefaultDeduction() tax.Deduction {
+	var deduction tax.Deduction
+	query := `SELECT personal_deduction FROM deductions ORDER BY id DESC LIMIT 1`
+	p.Db.QueryRow(query).Scan(&deduction.Personal)
+	return deduction
 }
 
 func (p *Postgres) ChangePersonalDeduction(deduction float64) {
-	query := `INSERT INTO deductions (personal_deduction) VALUES ($1)`
+	query := `INSERT INTO deductions (personal_deduction, max_kreceipt_deduction) 
+          SELECT $1, max_kreceipt_deduction FROM deductions ORDER BY id DESC LIMIT 1`
+
 	p.Db.Exec(query, deduction)
 }
 
 func (p *Postgres) ChangeKReceiptDeduction(deduction float64) {
-	query := `INSERT INTO deductions (personal_deduction) VALUES ($1)`
+	query := `INSERT INTO deductions (max_kreceipt_deduction, personal_deduction) 
+          SELECT $1, personal_deduction FROM deductions ORDER BY id DESC LIMIT 1`
+
 	p.Db.Exec(query, deduction)
 }

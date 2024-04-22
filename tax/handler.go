@@ -18,8 +18,9 @@ type Handler struct {
 }
 
 type Storer interface {
-	PersonalDeduction() Deduction
+	GetDefaultDeduction() Deduction
 	ChangePersonalDeduction(float64)
+	ChangeKReceiptDeduction(float64)
 }
 
 func New(db Storer) *Handler {
@@ -47,7 +48,7 @@ func (h *Handler) TaxCalculate(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
 	}
-	deductions := h.store.PersonalDeduction()
+	deductions := h.store.GetDefaultDeduction()
 	return c.JSON(http.StatusOK, taxCalculator(req, deductions))
 }
 
@@ -70,11 +71,11 @@ func (h *Handler) ChangeKReciept(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
 	}
-	h.store.ChangePersonalDeduction(req.Amount)
+	h.store.ChangeKReceiptDeduction(req.Amount)
 	response := map[string]float64{"kReceipt": req.Amount}
 	return c.JSON(http.StatusOK, response)
 
-}	
+}
 
 func (h *Handler) ReadTaxCSV(c echo.Context) error {
 	var taxCSVRequests []TaxCSVRequest
@@ -136,9 +137,10 @@ func (h *Handler) ReadTaxCSV(c echo.Context) error {
 				},
 			},
 		}
-		deductions := h.store.PersonalDeduction()
+		deductions := h.store.GetDefaultDeduction() //////////////
 		taxResponse := taxCalculator(req, deductions)
 		taxCSVResponseDetail.TotalIncome = taxCSVRequest.TotalIncome
+
 		if (taxResponse.Tax >= 0) && (taxResponse.TaxRefund == 0.0) {
 			taxCSVResponseDetail.Tax = taxResponse.Tax
 		} else {
@@ -148,15 +150,6 @@ func (h *Handler) ReadTaxCSV(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, taxCSVResponse)
-}
-
-func initDefaultDeduction() Deduction {
-
-	return Deduction{
-		Personal: 50000.0,
-		KReceipt: 15000.0,
-	}
-
 }
 
 func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
@@ -174,7 +167,7 @@ func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 				}
 			}
 			if allowance.AllowanceType == "k-receipt" {
-				if allowance.Amount > 50000.0 {
+				if allowance.Amount > deduction.MaxKReceipt {
 					income -= 50000.0
 				} else {
 					income -= allowance.Amount

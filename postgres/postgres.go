@@ -16,25 +16,24 @@ type Postgres struct {
 
 func New() (*Postgres, error) {
 
-    db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-    if err != nil {
-        log.Fatal(err)
-        return nil, err
-    }
-    err = db.Ping()
-    if err != nil {
-        log.Fatal(err)
-    }
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    postgresInstance := &Postgres{Db: db}
-    if err := postgresInstance.MigrateTable("deductions"); err != nil {
-        log.Fatal(err)
-        return nil, err
-    }
+	postgresInstance := &Postgres{Db: db}
+	if err := postgresInstance.MigrateTable("deductions"); err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
 
-    return postgresInstance, nil
+	return postgresInstance, nil
 }
-
 
 func (p *Postgres) CheckTableExists(tableName string) (bool, error) {
 	var exists bool
@@ -61,18 +60,16 @@ func (p *Postgres) MigrateTable(tableName string) error {
 	return nil
 }
 
-
 func migrationQuery(tableName string) string {
-    switch tableName {
-    case "deductions":
-        return `CREATE TABLE IF NOT EXISTS deductions (
+	switch tableName {
+	case "deductions":
+		return `CREATE TABLE IF NOT EXISTS deductions (
             id SERIAL PRIMARY KEY,
             personal_deduction FLOAT,
-            k_receipt_deduction FLOAT
-        );`
-    default:
-        return ""
-    }
+            max_kreceipt_deduction FLOAT
+        );
+        INSERT INTO deductions (personal_deduction, max_kreceipt_deduction) VALUES (60000.0, 50000.00);`
+	default:
+		return ""
+	}
 }
-
-
