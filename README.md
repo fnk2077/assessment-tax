@@ -21,14 +21,14 @@ K-Tax เป็น Application คำนวนภาษี ที่ให้ผ
   - 500,001 - 1,000,000 อัตราภาษี 15%
   - 1,000,001 - 2,000,000 อัตราภาษี 20%
   - มากกว่า 2,000,000 อัตราภาษี 35%
-- เงินบริจาคสามารถหย่อนได้สูงสุด 100,000 บาท
-- ค่าลดหย่อนส่วนตัวมีค่าเริ่มต้นที่ 60,000 บาท
-- k-receipt โครงการช้อปลดภาษี ซึ่งสามารถลดหย่อนได้สูงสุด 50,000 บาทเป็นค่าเริ่มต้น
-- แอดมิน สามารถกำหนดค่าลดหย่อนส่วนตัวได้โดยไม่เกิน 100,000 บาท
-- แอดมิน สามารถกำหนด k-receipt สูงสุดได้ แต่ไม่เกิน 100,000 บาท
-- ค่าลดหย่อนส่วนตัวต้องมีค่ามากกว่า 10,000 บาท
-- ค่าลด k-receipt ต้องมีค่ามากกว่า 0 บาท
-- ในกรณีที่รายรับ รวมหักค่าลดหย่อน พร้อมทั้ง wht พบว่าต้องได้เงินคืน จะต้องคำนวนเงินที่ต้องได้รับคืนใน field ใหม่ ที่ชื่อว่า taxRefund
+- เงินบริจาคสามารถหย่อนได้สูงสุด 100,000 บาท :construction:
+- ค่าลดหย่อนส่วนตัวมีค่าเริ่มต้นที่ 60,000 บาท :white_check_mark:
+- k-receipt โครงการช้อปลดภาษี ซึ่งสามารถลดหย่อนได้สูงสุด 50,000 บาทเป็นค่าเริ่มต้น :white_check_mark:
+- แอดมิน สามารถกำหนดค่าลดหย่อนส่วนตัวได้โดยไม่เกิน 100,000 บาท :construction:
+- แอดมิน สามารถกำหนด k-receipt สูงสุดได้ แต่ไม่เกิน 100,000 บาท :construction:
+- ค่าลดหย่อนส่วนตัวต้องมีค่ามากกว่า 10,000 บาท :construction:
+- ค่าลด k-receipt ต้องมีค่ามากกว่า 0 บาท :construction:
+- ในกรณีที่รายรับ รวมหักค่าลดหย่อน พร้อมทั้ง wht พบว่าต้องได้เงินคืน จะต้องคำนวนเงินที่ต้องได้รับคืนใน field ใหม่ ที่ชื่อว่า taxRefund :white_check_mark:
 
 ## Non-Functional Requirement
 - มี `Unit Test` ครอบคลุม
@@ -39,15 +39,15 @@ K-Tax เป็น Application คำนวนภาษี ที่ให้ผ
 - API port _MUST_ get from `environment variable` name `PORT`:white_check_mark:
 - database url _MUST_ get from environment variable name `DATABASE_URL` :white_check_mark:
   - ตัวอย่าง `DATABASE_URL=host={REPLACE_ME} port=5432 user={REPLACE_ME} password={REPLACE_ME} dbname={REPLACE_ME} sslmode=disable`
-- ใช้ `docker compose` สำหรับต่อ Database
+- ใช้ `docker compose` สำหรับต่อ Database :white_check_mark:
 - API support `Graceful Shutdown` :white_check_mark:
   - เช่น ถ้ามีการกด `Ctrl + C` จะ print `shutting down the server`
 - มี Dockerfile สำหรับ build image และเป็น `Multi-stage build`
 - ใช้ `HTTP Method` และ `HTTP Status Code` อย่างเหมาะสม
 - ใช้ `gofmt` และ `go vet`
-- แยก Branch ของแต่ละ Story ออกจาก `main` และ Merge กลับไปยัง `main` Branch เสมอ
+- แยก Branch ของแต่ละ Story ออกจาก `main` และ Merge กลับไปยัง `main` Branch เสมอ :white_check_mark:
   - เช่น story ที่ 1 จะใช้ branch ชื่อ `feature/story-1` หรือ `feature/store-1-create-tax-calculation`
-- admin กำหนด Basic authen ด้วย username: `adminTax`, password: `admin!`
+- admin กำหนด Basic authen ด้วย username: `adminTax`, password: `admin!`:white_check_mark:
   - username และ password ต้องเป็น environment variable
   - และ `env` ต้องเป็นชื่อ `ADMIN_USERNAME` และ `ADMIN_PASSWORD`
 - **การ run program จะใช้คำสั่ง docker compose up เพื่อเตรียม environment และ go run main.go เพื่อ start api**
@@ -61,13 +61,13 @@ K-Tax เป็น Application คำนวนภาษี ที่ให้ผ
 
 ## Assumption
 
-- รองรับแค่ปีเดียวคือ 2567
-- ไม่มีเก็บข้อมูลภาษีของผู้ใช้งาน
-- อัตราภาษีไม่มีการเปลี่ยนแปลงในอนาคต
-- ค่าลดหย่อนมีได้ 3 ชนิดเท่านั้น ค่าลดหย่อนส่วนตัว/เงินบริจาค/ช้อปปลดภาษี
+- รองรับแค่ปีเดียวคือ 2567 :white_check_mark:
+- ไม่มีเก็บข้อมูลภาษีของผู้ใช้งาน :white_check_mark:
+- อัตราภาษีไม่มีการเปลี่ยนแปลงในอนาคต :white_check_mark:
+- ค่าลดหย่อนมีได้ 3 ชนิดเท่านั้น ค่าลดหย่อนส่วนตัว/เงินบริจาค/ช้อปปลดภาษี :white_check_mark:
 - ค่าลดหย่อนที่จะส่งเข้ามาคำนวนไม่มีค่าน้อยกว่า 0
 - ข้อมูล wht ที่จะถูกส่งเข้ามาคำนวน ไม่สามารถมีค่าน้อยกว่า 0 หรือมากกว่ารายรับได้
-- csv ที่รับเข้ามา ต้องใช้ชื่อตามที่กำหนดให้ และมีโครงสร้างข้อมูลตามตัวอย่างเท่านั้น
+- csv ที่รับเข้ามา ต้องใช้ชื่อตามที่กำหนดให้ และมีโครงสร้างข้อมูลตามตัวอย่างเท่านั้น 
 - ข้อมูลที่รับเข้ามา ต้องผ่านการตรวจสอบความถูกต้องและความสมบูรณ์ก่อนการคำนวน
 
 ## Stories Note
