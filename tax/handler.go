@@ -59,6 +59,15 @@ func (h *Handler) ChangePersonalDeduction(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
 	}
+
+	if req.Amount <= 10000 {
+        return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 10,000"})
+    }
+	
+	if req.Amount > 100000 {
+		return c.JSON(http.StatusBadRequest, Err{Message: "Amount must not exceed 100,000"})
+	}
+
 	h.store.ChangePersonalDeduction(req.Amount)
 	response := map[string]float64{"personalDeduction": req.Amount}
 	return c.JSON(http.StatusOK, response)
@@ -71,6 +80,16 @@ func (h *Handler) ChangeKReciept(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
 	}
+
+	if req.Amount <= 0 {
+        return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 0"})
+    }
+
+	if req.Amount > 100000 {
+		return c.JSON(http.StatusBadRequest, Err{Message: "Amount must not exceed 100,000"})
+	}
+
+
 	h.store.ChangeKReceiptDeduction(req.Amount)
 	response := map[string]float64{"kReceipt": req.Amount}
 	return c.JSON(http.StatusOK, response)
@@ -189,15 +208,6 @@ func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 		{2000000, math.MaxFloat64, 0.30, "2,000,001 ขึ้นไป"},
 	}
 
-	// totalTax := 0.0
-	// for _, bracket := range taxLevels {
-	// 	if income > bracket.min && income <= bracket.max {
-	// 		totalTax = ((income - bracket.min) * bracket.rate) - req.Wht
-	// 		break
-	// 	}
-
-	// }
-
 	totalTax := 0.0
 	for _, bracket := range taxLevels {
 		if income > bracket.min && income <= bracket.max {
@@ -210,8 +220,8 @@ func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
 
 		} else if income <= bracket.min {
 			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
-				Level:     bracket.level,
-				Tax:       0.0,
+				Level: bracket.level,
+				Tax:   0.0,
 			})
 		} else {
 			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
