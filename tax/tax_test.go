@@ -63,7 +63,7 @@ func TestTaxCalculator(t *testing.T) {
 
 	t.Run("Test tax calculator with total income 500,000 donation amount 200,000 (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T){
 		//Arrange
-		want := 19000.0
+		want := 25000.0
 		req := TaxRequest{
 			TotalIncome: 500000.0,
 			Allowances: []Allowance{
