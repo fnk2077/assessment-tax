@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"time"
 
+	middlewares "github.com/fnk2077/assessment-tax/middleware"
 	"github.com/fnk2077/assessment-tax/postgres"
 	"github.com/fnk2077/assessment-tax/tax"
-	auth "github.com/fnk2077/assessment-tax/middleware"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -25,8 +25,8 @@ func main() {
 	taxHandler := tax.New(p)
 
 	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	// e.Use(middleware.Logger())
+	// e.Use(middleware.Recover())
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, Go Bootcamp!")
 	})
@@ -35,7 +35,7 @@ func main() {
 	e.POST("/tax/calculations/upload-csv", taxHandler.ReadTaxCSV)
 
 	g := e.Group("/admin")
-	g.Use(middleware.BasicAuth(auth.AuthMiddleware))
+	g.Use(middleware.BasicAuth(middlewares.AuthMiddleware))
 	g.POST("/deductions/personal", taxHandler.ChangePersonalDeduction)
 	g.POST("/deductions/k-receipt", taxHandler.ChangeKReciept)
 

@@ -3,6 +3,7 @@ package tax
 import (
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -44,9 +45,15 @@ type Err struct {
 // @Failure 400 {object} Err
 // @Failure 500 {object} Err
 func (h *Handler) TaxCalculate(c echo.Context) error {
+	fmt.Printf("Taxcal Hello")
 	var req TaxRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
+	}
+	
+	err := validateInput(req)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 	deductions := h.store.GetDefaultDeduction()
 	return c.JSON(http.StatusOK, taxCalculator(req, deductions))
@@ -169,6 +176,16 @@ func (h *Handler) ReadTaxCSV(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, taxCSVResponse)
+}
+
+func validateInput(req TaxRequest) error {
+	if req.TotalIncome < 0 {
+		return errors.New("total income must be more than 0")
+	}
+	if req.Wht < 0 {
+		return errors.New("wht must be more than 0")
+	}
+	return nil
 }
 
 func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
