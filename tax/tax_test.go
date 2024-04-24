@@ -242,7 +242,6 @@ func TestChangeDeduction(t *testing.T) {
 			  }`,
 		)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.SetBasicAuth("adminTax", "admin!")
 
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -275,5 +274,49 @@ func TestChangeDeduction(t *testing.T) {
 			t.Errorf("expected '%f' but got '%f'", expectedMessage, message)
 		}
 	})
+
+
+	t.Run("Test change Max K-receipt deduction amount 50,000.00", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
+			`{
+				"amount": 50000.0
+			  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/admin/deductions/:type")
+		c.SetParamNames("type")
+		c.SetParamValues("k-receipt")
+
+		stubTax := StubTax{
+			changeDeduction: nil,
+		}
+		handler := New(&stubTax)
+		handler.ChangeDeductionHandler(c)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status code %d but got %v", http.StatusOK, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		message, ok := responseBody["kReceipt"].(float64)
+		if !ok {
+			t.Error("expected 'kReceipt' key in response body", responseBody)
+		}
+
+		expectedMessage := 50000.0
+		if message != expectedMessage {
+			t.Errorf("expected '%f' but got '%f'", expectedMessage, message)
+		}
+	})
+
+	
 
 }

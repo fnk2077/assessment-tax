@@ -3,7 +3,6 @@ package tax
 import (
 	"encoding/csv"
 	"errors"
-	"fmt"
 
 	"io"
 	"net/http"
@@ -69,10 +68,11 @@ func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
 	}
-	// fmt.Println(c.Request().Body.Read([]byte{}))
+
 	deductionType := c.Param("type")
-	fmt.Printf("deductionType: %s\n", deductionType)
+	var response map[string]float64
 	if deductionType == "personal" {
+		response = map[string]float64{"personalDeduction": req.Amount}
 
 		if req.Amount <= 10000 {
 			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 10,000"})
@@ -82,6 +82,7 @@ func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must not exceed 100,000"})
 		}
 	} else if deductionType == "k-receipt" {
+		response = map[string]float64{"kReceipt": req.Amount}
 
 		if req.Amount <= 0 {
 			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 0"})
@@ -95,7 +96,7 @@ func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
 	}
 
 	h.store.ChangeDeduction(req.Amount, deductionType)
-	response := map[string]float64{"personalDeduction": req.Amount}
+	
 	return c.JSON(http.StatusOK, response)
 }
 
