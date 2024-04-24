@@ -234,11 +234,11 @@ func TestTaxCalculate(t *testing.T) {
 }
 
 func TestChangeDeduction(t *testing.T) {
-	t.Run("Test change Personal deduction amount 50,000.00", func(t *testing.T) {
+	t.Run("Test change Personal deduction amount 100,000.00", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
-				"amount": 50000.0
+				"amount": 100000.0
 			  }`,
 		)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -269,13 +269,135 @@ func TestChangeDeduction(t *testing.T) {
 			t.Error("expected 'personalDeduction' key in response body", responseBody)
 		}
 
-		expectedMessage := 50000.0
+		expectedMessage := 100000.0
 		if message != expectedMessage {
 			t.Errorf("expected '%f' but got '%f'", expectedMessage, message)
 		}
 	})
 
 
+	t.Run("Test change Personal deduction amount 10,001.00", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
+			`{
+				"amount": 10001.0
+			  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/admin/deductions/:type")
+		c.SetParamNames("type")
+		c.SetParamValues("personal")
+
+		stubTax := StubTax{
+			changeDeduction: nil,
+		}
+		handler := New(&stubTax)
+		handler.ChangeDeductionHandler(c)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status code %d but got %v", http.StatusOK, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		message, ok := responseBody["personalDeduction"].(float64)
+		if !ok {
+			t.Error("expected 'personalDeduction' key in response body", responseBody)
+		}
+
+		expectedMessage := 10001.0
+		if message != expectedMessage {
+			t.Errorf("expected '%f' but got '%f'", expectedMessage, message)
+		}
+	})
+
+	t.Run("Test change Personal deduction amount 100,001.00(exceed 100,000.0)", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
+			`{
+				"amount": 100001.0
+			  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/admin/deductions/:type")
+		c.SetParamNames("type")
+		c.SetParamValues("personal")
+
+		stubError := StubTax{
+			changeDeduction: echo.ErrBadRequest,
+		}
+		handler := New(&stubError)
+		handler.ChangeDeductionHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "Amount must not exceed 100,000"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+	})
+
+	t.Run("Test change Personal deduction amount 10,000 (must more than 10.000)", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
+			`{
+				"amount": 10000.0
+			  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/admin/deductions/:type")
+		c.SetParamNames("type")
+		c.SetParamValues("personal")
+
+		stubError := StubTax{
+			changeDeduction: echo.ErrBadRequest,
+		}
+		handler := New(&stubError)
+		handler.ChangeDeductionHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "Amount must be more than 10,000"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+	})
 	t.Run("Test change Max K-receipt deduction amount 50,000.00", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
@@ -316,6 +438,8 @@ func TestChangeDeduction(t *testing.T) {
 			t.Errorf("expected '%f' but got '%f'", expectedMessage, message)
 		}
 	})
+
+	
 
 	
 
