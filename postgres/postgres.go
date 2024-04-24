@@ -65,10 +65,10 @@ func migrationQuery(tableName string) string {
 	case "deductions":
 		return `CREATE TABLE IF NOT EXISTS deductions (
             id SERIAL PRIMARY KEY,
-            personal_deduction FLOAT,
-            max_kreceipt_deduction FLOAT
+            personal FLOAT,
+            max_kreceipt FLOAT
         );
-        INSERT INTO deductions (personal_deduction, max_kreceipt_deduction) VALUES (60000.0, 50000.00);`
+        INSERT INTO deductions (personal, max_kreceipt) VALUES (60000.0, 50000.00);`
 	default:
 		return ""
 	}

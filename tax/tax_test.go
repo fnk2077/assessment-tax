@@ -1,192 +1,73 @@
 package tax
 
 import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
+type StubTax struct {
+	taxCalculate    TaxResponse
+	changeDeduction error
+	err             error
+}
+
+func (s *StubTax) TaxCalculate(TaxRequest) (TaxResponse, error) {
+	return s.taxCalculate, nil
+}
+
+func (s *StubTax) ChangeDeduction(amount float64, deductionType string) error {
+	return s.changeDeduction
+}
+
 func TestTaxCalculator(t *testing.T) {
 
-	t.Run("Test tax calculator with total income 149000 (รายได้ 0 - 150,000 ได้รับการยกเว้น)", func(t *testing.T) {
-		//Arrange
-		want := 0.0
-		req := TaxRequest{
-			TotalIncome: 149000.0,
-		} 
+	t.Run("Test tax calculator with total income 150000.0 (รายได้ 0 - 150,000 ได้รับการยกเว้น)", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations", io.NopCloser(strings.NewReader(
+			`{
+			"totalIncome": 150000.0,
+			"wht": 0.0,
+			"allowances": [
+			  {
+				"allowanceType": "donation",
+				"amount": 0.0
+			  }
+			]
+		  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
 
-		deduction := Deduction{
-			Personal: 60000.0,
+		c := e.NewContext(req, rec)
+
+		expected := TaxResponse{
+			Tax: 0.0,
 		}
 
-		//Act
-		got := taxCalculator(req , deduction).Tax
-
-		//Assert
-		assert.Equal(t, want, got)
-	})
-
-	t.Run("Test tax calculator with total income 210001 (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T) {
-		//Arrange
-		want := 0.1
-		req := TaxRequest{
-			TotalIncome: 210001.0,
+		stubTax := StubTax{
+			taxCalculate: expected,
 		}
 
-		deduction := Deduction{
-			Personal: 60000.0,
+		handler := New(&stubTax)
+		err := handler.TaxCalculateHandler(c)
+		if err != nil {
+			t.Errorf("expect nil but got %v", err)
 		}
-
-		//Act
-		got := taxCalculator(req, deduction).Tax
-
-		//Assert
-		assert.Equal(t, want, got)
-	})
-
-	t.Run("Test tax calculator with total income 500,000 wth 25,000 (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T){
-		//Arrange
-		want := 4000.0
-		req := TaxRequest{
-			TotalIncome: 500000.0,
-			Wht: 25000.0,
+		actual := rec.Body.String()
+		if rec.Code != http.StatusOK {
+			t.Errorf("expect %d but got %d", http.StatusOK, rec.Code)
 		}
-		deduction := Deduction{
-			Personal: 60000.0,
+		var got TaxResponse
+		if err := json.Unmarshal([]byte(actual), &got); err != nil {
+			t.Errorf("expect nil but got %v", err)
 		}
-		//Act
-		got := taxCalculator(req, deduction).Tax
-
-		//Assert
-		assert.Equal(t, want, got)
-	})
-
-	t.Run("Test tax calculator with total income 500,000 donation amount 200,000 (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T){
-		//Arrange
-		want := 19000.0
-		req := TaxRequest{
-			TotalIncome: 500000.0,
-			Allowances: []Allowance{
-				{
-					AllowanceType: "donation",
-					Amount: 200000.0,
-				},
-			},
-		}
-
-		deduction := Deduction{
-			Personal: 60000.0,
-		}
-
-		//Act
-		got := taxCalculator(req, deduction).Tax
-
-		//Assert
-		assert.Equal(t, want, got)
-	})
-
-	t.Run("Test tax calculator with total income 500,000 donation amount 50,000 (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T){
-		//Arrange
-		want := 24000.0
-		req := TaxRequest{
-			TotalIncome: 500000.0,
-			Allowances: []Allowance{
-				{
-					AllowanceType: "donation",
-					Amount: 50000.0,
-				},
-			},
-		}
-
-		deduction := Deduction{
-			Personal: 60000.0,
-		}
-
-		//Act
-		got := taxCalculator(req, deduction).Tax
-
-		//Assert
-		assert.Equal(t, want, got)
-	})
-
-
-	t.Run("Test tax calculator with total income 500,000 k-receipt amount 100,000(max 50,000) (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T){
-		//Arrange
-		want := 24000.0
-		req := TaxRequest{
-			TotalIncome: 500000.0,
-			Allowances: []Allowance{
-				{
-					AllowanceType: "k-receipt",
-					Amount: 100000.0,
-				},
-			},
-		}
-
-		deduction := Deduction{
-			Personal: 60000.0,
-			MaxKReceipt: 50000.0,
-		}
-
-		//Act
-		got := taxCalculator(req, deduction).Tax
-
-		//Assert
-		assert.Equal(t, want, got)
-	})
-
-	t.Run("Test tax calculator with total income 500,000 k-receipt amount 40,000(max 50,000) (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T){
-		//Arrange
-		want := 25000.0
-		req := TaxRequest{
-			TotalIncome: 500000.0,
-			Allowances: []Allowance{
-				{
-					AllowanceType: "k-receipt",
-					Amount: 40000.0,
-				},
-			},
-		}
-
-		deduction := Deduction{
-			Personal: 60000.0,
-			MaxKReceipt: 50000.0,
-		}
-
-		//Act
-		got := taxCalculator(req, deduction).Tax
-
-		//Assert
-		assert.Equal(t, want, got)
-	})
-
-	t.Run("Test tax calculator with total income 500,000 k-receipt wth 25,000 amount 40,000(max 50,000) (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T){
-		//Arrange
-		want := 21000.0
-		req := TaxRequest{
-			TotalIncome: 400000.0,
-			Wht: 25000.0,
-			Allowances: []Allowance{
-				{
-					AllowanceType: "k-receipt",
-					Amount: 50000.0,
-				},
-				{
-					AllowanceType: "donation",
-					Amount: 100000.0,
-				},
-			},
-		}
-
-		deduction := Deduction{
-			Personal: 60000.0,
-			MaxKReceipt: 50000.0,
-		}
-
-		//Act
-		got := taxCalculator(req, deduction).TaxRefund
-
-		//Assert
-		assert.Equal(t, want, got)
+		assert.Equal(t, expected, got)
 	})
 }

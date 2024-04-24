@@ -25,19 +25,20 @@ func main() {
 	taxHandler := tax.New(p)
 
 	e := echo.New()
-	// e.Use(middleware.Logger())
-	// e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, Go Bootcamp!")
 	})
 
-	e.POST("/tax/calculations", taxHandler.TaxCalculate)
-	e.POST("/tax/calculations/upload-csv", taxHandler.ReadTaxCSV)
+	e.POST("/tax/calculations", taxHandler.TaxCalculateHandler)
+	e.POST("/tax/calculations/upload-csv", taxHandler.TaxCVSCalculateHandler)
 
 	g := e.Group("/admin")
 	g.Use(middleware.BasicAuth(middlewares.AuthMiddleware))
-	g.POST("/deductions/personal", taxHandler.ChangePersonalDeduction)
-	g.POST("/deductions/k-receipt", taxHandler.ChangeKReciept)
+	g.POST("/deductions/:type", taxHandler.ChangeDeductionHandler)
+	// g.POST("/deductions/personal", taxHandler.ChangePersonalDeductionHandler)
+	// g.POST("/deductions/k-receipt", taxHandler.ChangeKRecieptHandler)
 
 	go func() {
 		if err := e.Start(":" + os.Getenv("PORT")); err != nil && err != http.ErrServerClosed {

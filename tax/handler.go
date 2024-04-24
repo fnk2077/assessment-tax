@@ -3,9 +3,8 @@ package tax
 import (
 	"encoding/csv"
 	"errors"
-	"fmt"
+
 	"io"
-	"math"
 	"net/http"
 	"strconv"
 
@@ -19,9 +18,8 @@ type Handler struct {
 }
 
 type Storer interface {
-	GetDefaultDeduction() Deduction
-	ChangePersonalDeduction(float64)
-	ChangeKReceiptDeduction(float64)
+	TaxCalculate(TaxRequest) (TaxResponse, error)
+	ChangeDeduction(float64, string) error
 }
 
 func New(db Storer) *Handler {
@@ -44,66 +42,67 @@ type Err struct {
 // @Router /tax/calculations [post]
 // @Failure 400 {object} Err
 // @Failure 500 {object} Err
-func (h *Handler) TaxCalculate(c echo.Context) error {
-	fmt.Printf("Taxcal Hello")
+func (h *Handler) TaxCalculateHandler(c echo.Context) error {
 	var req TaxRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
 	}
-	
+
 	err := validateInput(req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
-	deductions := h.store.GetDefaultDeduction()
-	return c.JSON(http.StatusOK, taxCalculator(req, deductions))
+
+	resp, err := h.store.TaxCalculate(req)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Err{Message: "Internal server error"})
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
-func (h *Handler) ChangePersonalDeduction(c echo.Context) error {
+
+func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
 	req := struct {
 		Amount float64 `json:"amount"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
+
+	deductionType := c.Param("type")
+	if deductionType == "personal" {
+		if err := c.Bind(&req); err != nil {
+			return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
+		}
+
+		if req.Amount <= 10000 {
+			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 10,000"})
+		}
+
+		if req.Amount > 100000 {
+			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must not exceed 100,000"})
+		}
+	} else if deductionType == "k-receipt" {
+		if err := c.Bind(&req); err != nil {
+			return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
+		}
+
+		if req.Amount <= 0 {
+			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 0"})
+		}
+
+		if req.Amount > 100000 {
+			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must not exceed 100,000"})
+		}
+	} else {
+		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid deduction type"})
 	}
 
-	if req.Amount <= 10000 {
-        return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 10,000"})
-    }
-	
-	if req.Amount > 100000 {
-		return c.JSON(http.StatusBadRequest, Err{Message: "Amount must not exceed 100,000"})
-	}
-
-	h.store.ChangePersonalDeduction(req.Amount)
+	h.store.ChangeDeduction(req.Amount, deductionType)
 	response := map[string]float64{"personalDeduction": req.Amount}
 	return c.JSON(http.StatusOK, response)
 }
 
-func (h *Handler) ChangeKReciept(c echo.Context) error {
-	req := struct {
-		Amount float64 `json:"amount"`
-	}{}
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
-	}
 
-	if req.Amount <= 0 {
-        return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 0"})
-    }
-
-	if req.Amount > 100000 {
-		return c.JSON(http.StatusBadRequest, Err{Message: "Amount must not exceed 100,000"})
-	}
-
-
-	h.store.ChangeKReceiptDeduction(req.Amount)
-	response := map[string]float64{"kReceipt": req.Amount}
-	return c.JSON(http.StatusOK, response)
-
-}
-
-func (h *Handler) ReadTaxCSV(c echo.Context) error {
+func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 	var taxCSVRequests []TaxCSVRequest
 
 	file, err := c.FormFile("taxFile")
@@ -163,8 +162,10 @@ func (h *Handler) ReadTaxCSV(c echo.Context) error {
 				},
 			},
 		}
-		deductions := h.store.GetDefaultDeduction() //////////////
-		taxResponse := taxCalculator(req, deductions)
+		taxResponse, err := h.store.TaxCalculate(req)
+		if err != nil {
+			return err
+		}
 		taxCSVResponseDetail.TotalIncome = taxCSVRequest.TotalIncome
 
 		if (taxResponse.Tax >= 0) && (taxResponse.TaxRefund == 0.0) {
@@ -179,81 +180,11 @@ func (h *Handler) ReadTaxCSV(c echo.Context) error {
 }
 
 func validateInput(req TaxRequest) error {
-	if req.TotalIncome < 0 {
+	if req.TotalIncome < 0.0 {
 		return errors.New("total income must be more than 0")
 	}
-	if req.Wht < 0 {
+	if req.Wht < 0.0 {
 		return errors.New("wht must be more than 0")
 	}
 	return nil
-}
-
-func taxCalculator(req TaxRequest, deduction Deduction) TaxResponse {
-	var taxResponse TaxResponse
-	income := req.TotalIncome
-	income -= deduction.Personal
-
-	if len(req.Allowances) > 0 {
-		for _, allowance := range req.Allowances {
-			if allowance.AllowanceType == "donation" {
-				if allowance.Amount > 100000.0 {
-					income -= 100000.0
-				} else {
-					income -= allowance.Amount
-				}
-			}
-			if allowance.AllowanceType == "k-receipt" {
-				if allowance.Amount > deduction.MaxKReceipt {
-					income -= deduction.MaxKReceipt
-				} else {
-					income -= allowance.Amount
-				}
-			}
-		}
-	}
-
-	taxLevels := []struct {
-		min   float64
-		max   float64
-		rate  float64
-		level string
-	}{
-		{0, 150000, 0, "0 - 150,000"},
-		{150000, 500000, 0.10, "150,001 - 500,000"},
-		{500000, 1000000, 0.15, "500,001 - 1,000,000"},
-		{1000000, 2000000, 0.20, "1,000,001 - 2,000,000"},
-		{2000000, math.MaxFloat64, 0.30, "2,000,001 ขึ้นไป"},
-	}
-
-	totalTax := 0.0
-	for _, bracket := range taxLevels {
-		if income > bracket.min && income <= bracket.max {
-
-			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
-				Level: bracket.level,
-				Tax:   ((income - bracket.min) * bracket.rate),
-			})
-			totalTax += ((income - bracket.min) * bracket.rate)
-
-		} else if income <= bracket.min {
-			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
-				Level: bracket.level,
-				Tax:   0.0,
-			})
-		} else {
-			taxResponse.TaxLevels = append(taxResponse.TaxLevels, TaxLevel{
-				Level: bracket.level,
-				Tax:   ((bracket.max - bracket.min) * bracket.rate),
-			})
-			totalTax += ((bracket.max - bracket.min) * bracket.rate)
-		}
-	}
-
-	if totalTax-req.Wht >= 0 {
-		taxResponse.Tax = totalTax - req.Wht
-	} else {
-		taxResponse.TaxRefund = -(totalTax - req.Wht)
-	}
-
-	return taxResponse
 }

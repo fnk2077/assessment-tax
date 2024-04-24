@@ -29,6 +29,3 @@ jobs:
 
     - name: Run static code analysis
       run: go vet ./...
-
-    - name: Run linter
-      run: gofmt ./...

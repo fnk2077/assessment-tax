@@ -23,10 +23,6 @@ type TaxResponse struct {
 	TaxLevels []TaxLevel `json:"taxLevel"`
 }
 
-type Deduction struct {
-	Personal    float64 `json:"personalDeduction"`
-	MaxKReceipt float64 `json:"kReceipt"`
-}
 
 type TaxCSVRequest struct {
 	TotalIncome float64 `json:"totalIncome"`
