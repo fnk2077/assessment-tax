@@ -190,7 +190,7 @@ func TestTaxCalculate(t *testing.T) {
 		}
 	})
 
-	t.Run("Test tax calculate with total income 150000.0 should return error", func(t *testing.T) {
+	t.Run("Test tax calculate return InternalServerError", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations", io.NopCloser(strings.NewReader(
 			`{
@@ -229,6 +229,46 @@ func TestTaxCalculate(t *testing.T) {
 		expectedErrorMessage := "Internal server error"
 		if errorMessage != expectedErrorMessage {
 			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+	})
+}
+
+func TestChangeDeduction(t *testing.T) {
+	t.Run("Test change Personal deduction amount 50,000.00", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
+			`{
+			"amount": 50000.0,
+		  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/admin/deductions/:type")
+		c.SetParamNames("type")
+		c.SetParamValues("personal")
+
+		stubTax := StubTax{}
+		handler := New(&stubTax)
+		handler.TaxCalculateHandler(c)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected status code %d but got %v", http.StatusOK, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		message, ok := responseBody["personal"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedMessage := "50000.0"
+		if message != expectedMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedMessage, message)
 		}
 	})
 }
