@@ -238,19 +238,23 @@ func TestChangeDeduction(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
-			"amount": 50000.0,
-		  }`,
+				"amount": 50000.0
+			  }`,
 		)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.SetBasicAuth("adminTax", "admin!")
+
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetPath("/admin/deductions/:type")
 		c.SetParamNames("type")
 		c.SetParamValues("personal")
 
-		stubTax := StubTax{}
+		stubTax := StubTax{
+			changeDeduction: nil,
+		}
 		handler := New(&stubTax)
-		handler.TaxCalculateHandler(c)
+		handler.ChangeDeductionHandler(c)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected status code %d but got %v", http.StatusOK, rec.Code)
@@ -261,14 +265,15 @@ func TestChangeDeduction(t *testing.T) {
 			t.Errorf("error decoding response body: %v", err)
 		}
 
-		message, ok := responseBody["personal"].(string)
+		message, ok := responseBody["personalDeduction"].(float64)
 		if !ok {
-			t.Error("expected 'message' key in response body")
+			t.Error("expected 'personalDeduction' key in response body", responseBody)
 		}
 
-		expectedMessage := "50000.0"
+		expectedMessage := 50000.0
 		if message != expectedMessage {
-			t.Errorf("expected '%s' but got '%s'", expectedMessage, message)
+			t.Errorf("expected '%f' but got '%f'", expectedMessage, message)
 		}
 	})
+
 }

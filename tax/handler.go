@@ -3,6 +3,7 @@ package tax
 import (
 	"encoding/csv"
 	"errors"
+	"fmt"
 
 	"io"
 	"net/http"
@@ -61,17 +62,17 @@ func (h *Handler) TaxCalculateHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-
 func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
 	req := struct {
 		Amount float64 `json:"amount"`
 	}{}
-
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
+	}
+	// fmt.Println(c.Request().Body.Read([]byte{}))
 	deductionType := c.Param("type")
+	fmt.Printf("deductionType: %s\n", deductionType)
 	if deductionType == "personal" {
-		if err := c.Bind(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
-		}
 
 		if req.Amount <= 10000 {
 			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 10,000"})
@@ -81,9 +82,6 @@ func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must not exceed 100,000"})
 		}
 	} else if deductionType == "k-receipt" {
-		if err := c.Bind(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
-		}
 
 		if req.Amount <= 0 {
 			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 0"})
@@ -100,7 +98,6 @@ func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
 	response := map[string]float64{"personalDeduction": req.Amount}
 	return c.JSON(http.StatusOK, response)
 }
-
 
 func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 	var taxCSVRequests []TaxCSVRequest
