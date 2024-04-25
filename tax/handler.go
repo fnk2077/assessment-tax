@@ -19,6 +19,7 @@ type Handler struct {
 
 type Storer interface {
 	TaxCalculate(TaxRequest) (TaxResponse, error)
+	TaxCSVCalculate([]TaxCSVRequest) (TaxCSVResponse, error)
 	ChangeDeduction(float64, string) error
 }
 
@@ -96,7 +97,7 @@ func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
 	}
 
 	h.store.ChangeDeduction(req.Amount, deductionType)
-	
+
 	return c.JSON(http.StatusOK, response)
 }
 
@@ -146,32 +147,9 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 		})
 	}
 
-	var taxCSVResponse TaxCSVResponse
-
-	for _, taxCSVRequest := range taxCSVRequests {
-		var taxCSVResponseDetail TaxCSVResponseDetail
-		req := TaxRequest{
-			TotalIncome: taxCSVRequest.TotalIncome,
-			Wht:         taxCSVRequest.Wht,
-			Allowances: []Allowance{
-				{
-					AllowanceType: "donation",
-					Amount:        taxCSVRequest.Donation,
-				},
-			},
-		}
-		taxResponse, err := h.store.TaxCalculate(req)
-		if err != nil {
-			return err
-		}
-		taxCSVResponseDetail.TotalIncome = taxCSVRequest.TotalIncome
-
-		if (taxResponse.Tax >= 0) && (taxResponse.TaxRefund == 0.0) {
-			taxCSVResponseDetail.Tax = taxResponse.Tax
-		} else {
-			taxCSVResponseDetail.TaxRefund = taxResponse.TaxRefund
-		}
-		taxCSVResponse.Taxes = append(taxCSVResponse.Taxes, taxCSVResponseDetail)
+	taxCSVResponse, err := h.store.TaxCSVCalculate(taxCSVRequests)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Err{Message: "Internal server error"})
 	}
 
 	return c.JSON(http.StatusOK, taxCSVResponse)

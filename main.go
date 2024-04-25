@@ -37,8 +37,6 @@ func main() {
 	g := e.Group("/admin")
 	g.Use(middleware.BasicAuth(middlewares.AuthMiddleware))
 	g.POST("/deductions/:type", taxHandler.ChangeDeductionHandler)
-	// g.POST("/deductions/personal", taxHandler.ChangePersonalDeductionHandler)
-	// g.POST("/deductions/k-receipt", taxHandler.ChangeKRecieptHandler)
 
 	go func() {
 		if err := e.Start(":" + os.Getenv("PORT")); err != nil && err != http.ErrServerClosed {

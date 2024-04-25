@@ -73,15 +73,49 @@ func (p *Postgres) TaxCalculate(req tax.TaxRequest) (tax.TaxResponse, error) {
 	p.Db.QueryRow(`SELECT personal FROM deductions ORDER BY id DESC LIMIT 1`).Scan(&personalDeduction)
 	p.Db.QueryRow(`SELECT max_kreceipt FROM deductions ORDER BY id DESC LIMIT 1`).Scan(&maxKReceiptDeduction)
 
-	taxResponse, err := taxCalculator(req, personalDeduction, maxKReceiptDeduction)
-	if err != nil {
-		return taxResponse, err
-	}
+	taxResponse := taxCalculator(req, personalDeduction, maxKReceiptDeduction)
 
 	return taxResponse, nil
 }
 
-func taxCalculator(req tax.TaxRequest, personalDeduction, maxKReceiptDeduction float64) (tax.TaxResponse, error) {
+func (p *Postgres) TaxCSVCalculate(reqs []tax.TaxCSVRequest) (tax.TaxCSVResponse, error) {
+	var taxCSVResponse tax.TaxCSVResponse
+	var personalDeduction float64
+	var maxKReceiptDeduction float64
+	p.Db.QueryRow(`SELECT personal FROM deductions ORDER BY id DESC LIMIT 1`).Scan(&personalDeduction)
+	p.Db.QueryRow(`SELECT max_kreceipt FROM deductions ORDER BY id DESC LIMIT 1`).Scan(&maxKReceiptDeduction)
+
+	personalDeduction = 60000.0
+	maxKReceiptDeduction = 50000.0
+
+	for _, req := range reqs {
+		var taxCSVResponseDetail tax.TaxCSVResponseDetail
+		taxRequest := tax.TaxRequest{
+			TotalIncome: req.TotalIncome,
+			Wht:         req.Wht,
+			Allowances: []tax.Allowance{
+				{
+					AllowanceType: "donation",
+					Amount:        req.Donation,
+				},
+			},
+		}
+		taxResponse:= taxCalculator(taxRequest, personalDeduction, maxKReceiptDeduction)
+
+		taxCSVResponseDetail.TotalIncome = req.TotalIncome
+
+		if (taxResponse.Tax >= 0) && (taxResponse.TaxRefund == 0.0) {
+			taxCSVResponseDetail.Tax = taxResponse.Tax
+		} else {
+			taxCSVResponseDetail.TaxRefund = taxResponse.TaxRefund
+		}
+		taxCSVResponse.Taxes = append(taxCSVResponse.Taxes, taxCSVResponseDetail)
+	}
+
+	return taxCSVResponse, nil
+}
+
+func taxCalculator(req tax.TaxRequest, personalDeduction, maxKReceiptDeduction float64) tax.TaxResponse {
 	const maxDontationDecuction = 100000.0
 	var taxResponse tax.TaxResponse
 	income := req.TotalIncome - personalDeduction
@@ -146,6 +180,5 @@ func taxCalculator(req tax.TaxRequest, personalDeduction, maxKReceiptDeduction f
 		taxResponse.TaxRefund = -(totalTax - req.Wht)
 	}
 
-	return taxResponse, nil
-
+	return taxResponse
 }

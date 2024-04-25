@@ -17,10 +17,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got, err := taxCalculator(req, 60000.0, 50000.0)
-		if err != nil {
-			t.Errorf("expect nil but got %v", err)
-		}
+		got := taxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -34,10 +31,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got, err := taxCalculator(req, 60000.0, 50000.0)
-		if err != nil {
-			t.Errorf("expect nil but got %v", err)
-		}
+		got := taxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -51,10 +45,8 @@ func TestTaxCalculator(t *testing.T) {
 			Wht:         25000.0,
 		}
 		//Act
-		got, err := taxCalculator(req, 60000.0, 50000.0)
-		if err != nil {
-			t.Errorf("expect nil but got %v", err)
-		}
+		got := taxCalculator(req, 60000.0, 50000.0)
+
 		//Assert
 		assert.Equal(t, want, got.Tax)
 	})
@@ -73,10 +65,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got, err := taxCalculator(req, 60000.0, 50000.0)
-		if err != nil {
-			t.Errorf("expect nil but got %v", err)
-		}
+		got := taxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -96,10 +85,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got, err := taxCalculator(req, 60000.0, 50000.0)
-		if err != nil {
-			t.Errorf("expect nil but got %v", err)
-		}
+		got := taxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -119,10 +105,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got, err := taxCalculator(req, 60000.0, 50000.0)
-		if err != nil {
-			t.Errorf("expect nil but got %v", err)
-		}
+		got := taxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -142,10 +125,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got, err := taxCalculator(req, 60000.0, 50000.0)
-		if err != nil {
-			t.Errorf("expect nil but got %v", err)
-		}
+		got := taxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -170,10 +150,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got, err := taxCalculator(req, 60000.0, 50000.0)
-		if err != nil {
-			t.Errorf("expect nil but got %v", err)
-		}
+		got := taxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.TaxRefund)

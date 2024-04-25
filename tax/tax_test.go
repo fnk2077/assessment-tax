@@ -29,6 +29,9 @@ func (s *StubTax) ChangeDeduction(amount float64, deductionType string) error {
 	return s.changeDeduction
 }
 
+func (s *StubTax) TaxCSVCalculate([]TaxCSVRequest) (TaxCSVResponse, error) {
+	return TaxCSVResponse{}, s.err
+}
 func TestTaxCalculate(t *testing.T) {
 
 	t.Run("Test tax calculate with total income 150000.0 (รายได้ 0 - 150,000 ได้รับการยกเว้น)", func(t *testing.T) {
@@ -649,6 +652,48 @@ func TestTaxCVSCalculate(t *testing.T) {
 		assert.Equal(t, expected, got)
 	})
 
+	t.Run("Test tax CSV calculate with total income 150000.0 wht 5,000.0 expect TaxRefund", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,allowances\n150000.0,5000.0.0,0.0\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		expected := TaxResponse{
+			Tax:       0.0,
+			TaxRefund: 5000.0,
+		}
+
+		stubTax := StubTax{
+			taxCalculate: expected,
+		}
+
+		handler := New(&stubTax)
+		err = handler.TaxCVSCalculateHandler(c)
+		if err != nil {
+			t.Errorf("expect nil but got %v", err)
+		}
+		actual := rec.Body.String()
+		if rec.Code != http.StatusOK {
+			t.Errorf("expect %d but got %d", http.StatusOK, rec.Code)
+		}
+		var got TaxResponse
+		if err := json.Unmarshal([]byte(actual), &got); err != nil {
+			t.Errorf("expect nil but got %v", err)
+		}
+		assert.Equal(t, expected, got)
+	})
+
 	t.Run("Test tax calculate csv with Wrong field", func(t *testing.T) {
 		e := echo.New()
 		body := new(bytes.Buffer)
@@ -696,14 +741,14 @@ func TestTaxCVSCalculate(t *testing.T) {
 		c := e.NewContext(req, rec)
 
 		stubTax := StubTax{
-			err: echo.ErrBadRequest ,
+			err: echo.ErrBadRequest,
 		}
 
 		handler := New(&stubTax)
 		if err := handler.TaxCVSCalculateHandler(c); err == nil {
 			t.Errorf("expected error but got nil")
 		}
-		
+
 	})
 
 }
