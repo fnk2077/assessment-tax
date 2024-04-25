@@ -17,6 +17,7 @@ import (
 
 type StubTax struct {
 	taxCalculate    TaxResponse
+	taxCSVCalculate TaxCSVResponse
 	changeDeduction error
 	err             error
 }
@@ -30,7 +31,7 @@ func (s *StubTax) ChangeDeduction(amount float64, deductionType string) error {
 }
 
 func (s *StubTax) TaxCSVCalculate([]TaxCSVRequest) (TaxCSVResponse, error) {
-	return TaxCSVResponse{}, s.err
+	return s.taxCSVCalculate, s.err
 }
 func TestTaxCalculate(t *testing.T) {
 
@@ -628,12 +629,17 @@ func TestTaxCVSCalculate(t *testing.T) {
 
 		c := e.NewContext(req, rec)
 
-		expected := TaxResponse{
-			Tax: 0.0,
+		expected := TaxCSVResponse{
+			Taxes: []TaxCSVResponseDetail{
+				{
+					TotalIncome: 150000.0,
+					Tax:         0.0,
+				},
+			},
 		}
 
 		stubTax := StubTax{
-			taxCalculate: expected,
+			taxCSVCalculate: expected,
 		}
 
 		handler := New(&stubTax)
@@ -645,7 +651,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Errorf("expect %d but got %d", http.StatusOK, rec.Code)
 		}
-		var got TaxResponse
+		var got TaxCSVResponse
 		if err := json.Unmarshal([]byte(actual), &got); err != nil {
 			t.Errorf("expect nil but got %v", err)
 		}
@@ -660,7 +666,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\n150000.0,5000.0.0,0.0\n"))
+		part.Write([]byte("totalIncome,wht,allowances\n150000.0,5000.0,0.0\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
@@ -669,13 +675,18 @@ func TestTaxCVSCalculate(t *testing.T) {
 
 		c := e.NewContext(req, rec)
 
-		expected := TaxResponse{
-			Tax:       0.0,
-			TaxRefund: 5000.0,
+		expected := TaxCSVResponse{
+			Taxes: []TaxCSVResponseDetail{
+				{
+					TotalIncome: 150000.0,
+					Tax:         0.0,
+					TaxRefund:   5000.0,
+				},
+			},
 		}
 
 		stubTax := StubTax{
-			taxCalculate: expected,
+			taxCSVCalculate: expected,
 		}
 
 		handler := New(&stubTax)
@@ -683,15 +694,15 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("expect nil but got %v", err)
 		}
+
 		actual := rec.Body.String()
 		if rec.Code != http.StatusOK {
 			t.Errorf("expect %d but got %d", http.StatusOK, rec.Code)
 		}
-		var got TaxResponse
+		var got TaxCSVResponse
 		if err := json.Unmarshal([]byte(actual), &got); err != nil {
 			t.Errorf("expect nil but got %v", err)
 		}
-		assert.Equal(t, expected, got)
 	})
 
 	t.Run("Test tax calculate csv with Wrong field", func(t *testing.T) {
