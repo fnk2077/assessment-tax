@@ -1,8 +1,11 @@
 package tax
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -275,7 +278,6 @@ func TestChangeDeduction(t *testing.T) {
 		}
 	})
 
-
 	t.Run("Test change Personal deduction amount 10,001.00", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
@@ -398,11 +400,11 @@ func TestChangeDeduction(t *testing.T) {
 			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
 		}
 	})
-	t.Run("Test change Max K-receipt deduction amount 50,000.00", func(t *testing.T) {
+	t.Run("Test change Max K-receipt deduction amount 1.00", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
-				"amount": 50000.0
+				"amount": 1.0
 			  }`,
 		)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -433,14 +435,275 @@ func TestChangeDeduction(t *testing.T) {
 			t.Error("expected 'kReceipt' key in response body", responseBody)
 		}
 
-		expectedMessage := 50000.0
+		expectedMessage := 1.0
 		if message != expectedMessage {
 			t.Errorf("expected '%f' but got '%f'", expectedMessage, message)
 		}
 	})
 
-	
+	t.Run("Test change Max K-receipt deduction amount 100,001.00(exceed 100,000.0)", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
+			`{
+				"amount": 100001.0
+			  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
-	
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/admin/deductions/:type")
+		c.SetParamNames("type")
+		c.SetParamValues("k-receipt")
+
+		stubError := StubTax{
+			changeDeduction: echo.ErrBadRequest,
+		}
+		handler := New(&stubError)
+		handler.ChangeDeductionHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "Amount must not exceed 100,000"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+	})
+
+	t.Run("Test change Max K-receipt deduction amount 0.00(must more than 0.0)", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
+			`{
+				"amount": 0.0
+			  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/admin/deductions/:type")
+		c.SetParamNames("type")
+		c.SetParamValues("k-receipt")
+
+		stubError := StubTax{
+			changeDeduction: echo.ErrBadRequest,
+		}
+		handler := New(&stubError)
+		handler.ChangeDeductionHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "Amount must be more than 0"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+	})
+
+	t.Run("Test Deduction Invalid request body", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
+			`{
+				"money": "asd",
+			  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/admin/deductions/:type")
+		c.SetParamNames("type")
+		c.SetParamValues("k-receipt")
+
+		stubError := StubTax{
+			changeDeduction: echo.ErrBadRequest,
+		}
+		handler := New(&stubError)
+		handler.ChangeDeductionHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "Invalid request body"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+	})
+
+	t.Run("Test Deduction Invalid deduction type", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
+			`{
+				"amount": 100.0
+			  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/admin/deductions/:type")
+		c.SetParamNames("type")
+		c.SetParamValues("test")
+
+		stubError := StubTax{
+			changeDeduction: echo.ErrBadRequest,
+		}
+		handler := New(&stubError)
+		handler.ChangeDeductionHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "Invalid deduction type"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+	})
+}
+
+func TestTaxCVSCalculate(t *testing.T) {
+
+	t.Run("Test tax CSV calculate with total income 150000.0 (รายได้ 0 - 150,000 ได้รับการยกเว้น)", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,allowances\n150000.0,0.0,0.0\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		expected := TaxResponse{
+			Tax: 0.0,
+		}
+
+		stubTax := StubTax{
+			taxCalculate: expected,
+		}
+
+		handler := New(&stubTax)
+		err = handler.TaxCVSCalculateHandler(c)
+		if err != nil {
+			t.Errorf("expect nil but got %v", err)
+		}
+		actual := rec.Body.String()
+		if rec.Code != http.StatusOK {
+			t.Errorf("expect %d but got %d", http.StatusOK, rec.Code)
+		}
+		var got TaxResponse
+		if err := json.Unmarshal([]byte(actual), &got); err != nil {
+			t.Errorf("expect nil but got %v", err)
+		}
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("Test tax calculate csv with Wrong field", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("TaxTest", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,allowances\n150000.0,0.0,0.0\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest,
+		}
+
+		handler := New(&stubTax)
+		err = handler.TaxCVSCalculateHandler(c)
+		expectedError := errors.New("http: no such file")
+		if err.Error() != expectedError.Error() {
+			t.Errorf("expect %v but got %v", expectedError, err)
+		}
+	})
+
+	t.Run("Test tax CSV calculate with Wrong Type value", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,allowances\nabc,def,gdf.ads\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest ,
+		}
+
+		handler := New(&stubTax)
+		if err := handler.TaxCVSCalculateHandler(c); err == nil {
+			t.Errorf("expected error but got nil")
+		}
+		
+	})
 
 }
