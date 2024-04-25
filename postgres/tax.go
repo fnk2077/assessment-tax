@@ -85,9 +85,6 @@ func (p *Postgres) TaxCSVCalculate(reqs []tax.TaxCSVRequest) (tax.TaxCSVResponse
 	p.Db.QueryRow(`SELECT personal FROM deductions ORDER BY id DESC LIMIT 1`).Scan(&personalDeduction)
 	p.Db.QueryRow(`SELECT max_kreceipt FROM deductions ORDER BY id DESC LIMIT 1`).Scan(&maxKReceiptDeduction)
 
-	personalDeduction = 60000.0
-	maxKReceiptDeduction = 50000.0
-
 	for _, req := range reqs {
 		var taxCSVResponseDetail tax.TaxCSVResponseDetail
 		taxRequest := tax.TaxRequest{
@@ -116,15 +113,15 @@ func (p *Postgres) TaxCSVCalculate(reqs []tax.TaxCSVRequest) (tax.TaxCSVResponse
 }
 
 func taxCalculator(req tax.TaxRequest, personalDeduction, maxKReceiptDeduction float64) tax.TaxResponse {
-	const maxDontationDecuction = 100000.0
+	const maxDonationDecuction = 100000.0
 	var taxResponse tax.TaxResponse
 	income := req.TotalIncome - personalDeduction
 
 	if len(req.Allowances) > 0 {
 		for _, allowance := range req.Allowances {
 			if allowance.AllowanceType == "donation" {
-				if allowance.Amount > maxDontationDecuction {
-					income -= maxDontationDecuction
+				if allowance.Amount > maxDonationDecuction {
+					income -= maxDonationDecuction
 				} else {
 					income -= allowance.Amount
 				}
