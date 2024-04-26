@@ -762,4 +762,60 @@ func TestTaxCVSCalculate(t *testing.T) {
 
 	})
 
+	t.Run("Test tax CSV calculate with Wrong Type WHT", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,allowances\n500000.0,def,gdf\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest,
+		}
+
+		handler := New(&stubTax)
+		if err := handler.TaxCVSCalculateHandler(c); err == nil {
+			t.Errorf("expected error but got nil")
+		}
+
+	})
+
+	t.Run("Test tax CSV calculate with Wrong Type Allowance", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,allowances\n500000.0,25000.0,gdf\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest,
+		}
+
+		handler := New(&stubTax)
+		if err := handler.TaxCVSCalculateHandler(c); err == nil {
+			t.Errorf("expected error but got nil")
+		}
+
+	})
+
 }
