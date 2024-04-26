@@ -1,4 +1,4 @@
-package postgres
+package calculator
 
 import (
 	"testing"
@@ -17,7 +17,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got := taxCalculator(req, 60000.0, 50000.0)
+		got := TaxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -31,7 +31,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got := taxCalculator(req, 60000.0, 50000.0)
+		got := TaxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -45,7 +45,7 @@ func TestTaxCalculator(t *testing.T) {
 			Wht:         25000.0,
 		}
 		//Act
-		got := taxCalculator(req, 60000.0, 50000.0)
+		got := TaxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -65,7 +65,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got := taxCalculator(req, 60000.0, 50000.0)
+		got := TaxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -85,7 +85,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got := taxCalculator(req, 60000.0, 50000.0)
+		got := TaxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -105,7 +105,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got := taxCalculator(req, 60000.0, 50000.0)
+		got := TaxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -125,7 +125,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got := taxCalculator(req, 60000.0, 50000.0)
+		got := TaxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.Tax)
@@ -150,7 +150,7 @@ func TestTaxCalculator(t *testing.T) {
 		}
 
 		//Act
-		got := taxCalculator(req, 60000.0, 50000.0)
+		got := TaxCalculator(req, 60000.0, 50000.0)
 
 		//Assert
 		assert.Equal(t, want, got.TaxRefund)

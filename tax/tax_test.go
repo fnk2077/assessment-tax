@@ -10,7 +10,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -816,6 +815,47 @@ func TestTaxCVSCalculate(t *testing.T) {
 			t.Errorf("expected error but got nil")
 		}
 
+	})
+
+	t.Run("Test tax CSV calculate return InternalServerError", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,allowances\n500000.0,25000.0,0.0\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubError := StubTax{err: echo.ErrInternalServerError}
+		handler := New(&stubError)
+		handler.TaxCVSCalculateHandler(c)
+
+		if rec.Code != http.StatusInternalServerError {
+			t.Errorf("expected status code %d but got %v", http.StatusInternalServerError, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "Internal server error"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
 	})
 
 }

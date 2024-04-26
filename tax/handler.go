@@ -111,7 +111,7 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 
 	src, err := file.Open()
 	if err != nil {
-		return err
+		return errors.New("cannot open file")
 	}
 	defer src.Close()
 
@@ -124,7 +124,7 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 			break
 		}
 		if err != nil {
-			return err
+			return errors.New("cannot read file")
 		}
 
 		totalIncome, err := strconv.ParseFloat(record[0], 64)
