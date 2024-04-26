@@ -14,6 +14,8 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	_ "github.com/fnk2077/assessment-tax/docs"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 func main() {
@@ -30,6 +32,8 @@ func main() {
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, Go Bootcamp!")
 	})
+
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	e.POST("/tax/calculations", taxHandler.TaxCalculateHandler)
 	e.POST("/tax/calculations/upload-csv", taxHandler.TaxCVSCalculateHandler)

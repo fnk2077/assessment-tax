@@ -1,0 +1,58 @@
+definitions:
+  tax.Allowance:
+    properties:
+      allowanceType:
+        type: string
+      amount:
+        type: number
+    type: object
+  tax.Err:
+    properties:
+      message:
+        type: string
+    type: object
+  tax.TaxRequest:
+    properties:
+      allowances:
+        items:
+          $ref: '#/definitions/tax.Allowance'
+        type: array
+      totalIncome:
+        type: number
+      wht:
+        type: number
+    type: object
+info:
+  contact: {}
+paths:
+  /tax/calculations:
+    post:
+      consumes:
+      - application/json
+      description: Calculate tax from request based on the provided data
+      parameters:
+      - description: Tax data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/tax.TaxRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/tax.TaxRequest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tax.Err'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/tax.Err'
+      summary: Calculate tax from request
+      tags:
+      - tax
+swagger: "2.0"

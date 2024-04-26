@@ -1,3 +1,5 @@
+//go:build integration
+
 package tax
 
 import (
@@ -16,7 +18,7 @@ import (
 
 const serverPort = 8080
 
-func TestITTaxCaculate(t *testing.T) {
+func TestITTaxCalculate(t *testing.T) {
 
 	t.Run("given user able to calculate tax should return tax", func(t *testing.T) {
 		reqBody := `{

@@ -31,7 +31,7 @@ type Err struct {
 	Message string `json:"message"`
 }
 
-// TaxCalculate calculate tax from request.
+// TaxCalculate from tax request.
 //
 // @Summary Calculate tax from request
 // @Description Calculate tax from request based on the provided data
@@ -39,7 +39,7 @@ type Err struct {
 // @Accept json
 // @Produce json
 // @Param request body TaxRequest true "Tax data"
-// @Success 201 {object} Tax
+// @Success 201 {object} TaxRequest
 // @Router /tax/calculations [post]
 // @Failure 400 {object} Err
 // @Failure 500 {object} Err
