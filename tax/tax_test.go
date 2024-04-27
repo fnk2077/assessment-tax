@@ -696,7 +696,7 @@ func TestChangeDeduction(t *testing.T) {
 
 func TestTaxCVSCalculate(t *testing.T) {
 
-	t.Run("Test tax CSV calculate with total income 150000.0 (รายได้ 0 - 150,000 ได้รับการยกเว้น)", func(t *testing.T) {
+	t.Run("Test tax CSV calculate with total income 150000.0", func(t *testing.T) {
 		e := echo.New()
 		body := new(bytes.Buffer)
 		writer := multipart.NewWriter(body)
@@ -704,7 +704,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\n150000.0,0.0,0.0\n"))
+		part.Write([]byte("totalIncome,wht,donation\n150000.0,0.0,0.0\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
@@ -750,7 +750,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\n150000.0,5000.0,0.0\n"))
+		part.Write([]byte("totalIncome,wht,donation\n150000.0,5000.0,0.0\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
@@ -797,7 +797,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\n150000.0,0.0,0.0\n"))
+		part.Write([]byte("totalIncome,wht,donation\n150000.0,0.0,0.0\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
@@ -826,7 +826,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\n-123.00,0.0,0.0\n"))
+		part.Write([]byte("totalIncome,wht,donation\n-123.00,0.0,0.0\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
@@ -871,7 +871,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\n123.00,-1230.0,0.0\n"))
+		part.Write([]byte("totalIncome,wht,donation\n123.00,-1230.0,0.0\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
@@ -916,7 +916,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\n123.00,0.0,-1.0\n"))
+		part.Write([]byte("totalIncome,wht,donation\n123.00,0.0,-1.0\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
@@ -961,7 +961,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\nabc,def,gdf.ads\n"))
+		part.Write([]byte("totalIncome,wht,donation\nabc,def,gdf.ads\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
@@ -989,7 +989,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\n500000.0,def,gdf\n"))
+		part.Write([]byte("totalIncome,wht,donation\n500000.0,def,gdf\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
@@ -1017,7 +1017,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\n500000.0,25000.0,gdf\n"))
+		part.Write([]byte("totalIncome,wht,donation\n500000.0,25000.0,gdf\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
@@ -1037,6 +1037,143 @@ func TestTaxCVSCalculate(t *testing.T) {
 
 	})
 
+	t.Run("Test tax CSV calculate with Wrong Header", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("asdsadsad,wht,allowances\n123.00,0.0,-1.0\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest,
+		}
+
+		handler := New(&stubTax)
+		handler.TaxCVSCalculateHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "Invalid CSV file: incorrect header format"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+
+	})
+
+	t.Run("Test tax CSV calculate with Missing header", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte(""))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest,
+		}
+
+		handler := New(&stubTax)
+		handler.TaxCVSCalculateHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "Invalid CSV file: missing header"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+
+	})
+
+	t.Run("Test tax CSV calculate with Invalid csv file", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,donation\n500000.0,25000.0,0.0,123,456\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest,
+		}
+
+		handler := New(&stubTax)
+		handler.TaxCVSCalculateHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "Invalid CSV file"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+
+	})
+	
+	
+
 	t.Run("Test tax CSV calculate return InternalServerError", func(t *testing.T) {
 		e := echo.New()
 		body := new(bytes.Buffer)
@@ -1045,7 +1182,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		if err != nil {
 			t.Errorf("create form file error: %v", err)
 		}
-		part.Write([]byte("totalIncome,wht,allowances\n500000.0,25000.0,0.0\n"))
+		part.Write([]byte("totalIncome,wht,donation\n500000.0,25000.0,0.0\n"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)

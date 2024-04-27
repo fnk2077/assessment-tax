@@ -3,11 +3,14 @@ package tax
 import (
 	"encoding/csv"
 	"errors"
+	"fmt"
+	"reflect"
 
-	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/labstack/echo/v4"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -134,12 +137,22 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 
 	src, err := file.Open()
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid CSV file"})
+		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid CSV file: cannot open file"})
 	}
 	defer src.Close()
 
 	reader := csv.NewReader(src)
-	_, _ = reader.Read()
+
+	header, err := reader.Read()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid CSV file: missing header"})
+	}
+
+	expectedHeader := []string{"totalIncome", "wht", "donation"}
+	if !reflect.DeepEqual(header, expectedHeader) {
+		fmt.Println(header, expectedHeader)
+		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid CSV file: incorrect header format"})
+	}
 
 	for {
 		record, err := reader.Read()
@@ -186,6 +199,7 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, taxCSVResponse)
 }
+
 
 func TaxRequestValidation(req TaxRequest) error {
 	if req.TotalIncome < 0.0 {
