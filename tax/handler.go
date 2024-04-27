@@ -200,7 +200,6 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, taxCSVResponse)
 }
 
-
 func TaxRequestValidation(req TaxRequest) error {
 	if req.TotalIncome < 0.0 {
 		return errors.New("total income must be more than 0")

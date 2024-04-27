@@ -1171,8 +1171,6 @@ func TestTaxCVSCalculate(t *testing.T) {
 		}
 
 	})
-	
-	
 
 	t.Run("Test tax CSV calculate return InternalServerError", func(t *testing.T) {
 		e := echo.New()
