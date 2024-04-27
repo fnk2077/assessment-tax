@@ -125,6 +125,8 @@ Response body
 |2,000,001 ขึ้นไป|0|
 </details>
 
+
+
 -------
 ### Story: EXP02
 
