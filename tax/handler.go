@@ -4,10 +4,10 @@ import (
 	"encoding/csv"
 	"errors"
 
+	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
 	"strconv"
-	"github.com/labstack/echo/v4"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -178,7 +178,6 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 			Donation:    donation,
 		})
 	}
-
 
 	taxCSVResponse, err := h.store.TaxCSVCalculate(taxCSVRequests)
 	if err != nil {

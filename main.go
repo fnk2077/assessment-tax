@@ -8,13 +8,13 @@ import (
 	"os/signal"
 	"time"
 
+	_ "github.com/fnk2077/assessment-tax/docs"
 	middlewares "github.com/fnk2077/assessment-tax/middleware"
 	"github.com/fnk2077/assessment-tax/postgres"
 	"github.com/fnk2077/assessment-tax/tax"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	_ "github.com/fnk2077/assessment-tax/docs"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 

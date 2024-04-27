@@ -85,5 +85,3 @@ func (p *Postgres) TaxCSVCalculate(reqs []tax.TaxCSVRequest) (tax.TaxCSVResponse
 
 	return taxCSVResponse, nil
 }
-
-

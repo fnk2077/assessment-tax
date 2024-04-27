@@ -42,6 +42,9 @@ jobs:
     - name: Run static code analysis
       run: go vet ./...
 
+    - name: Format code
+      run: go fmt ./...
+
     - name: Build Docker Image
       run: |
         docker build -t my-go-app .

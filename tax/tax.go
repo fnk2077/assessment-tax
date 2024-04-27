@@ -23,7 +23,6 @@ type TaxResponse struct {
 	TaxLevels []TaxLevel `json:"taxLevel"`
 }
 
-
 type TaxCSVRequest struct {
 	TotalIncome float64 `json:"totalIncome"`
 	Wht         float64 `json:"wht"`
