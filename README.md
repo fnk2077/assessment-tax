@@ -43,12 +43,16 @@ K-Tax เป็น Application คำนวนภาษี ที่ให้ผ
 - API support `Graceful Shutdown` :white_check_mark:
   - เช่น ถ้ามีการกด `Ctrl + C` จะ print `shutting down the server`
 - มี Dockerfile สำหรับ build image และเป็น `Multi-stage build` :white_check_mark:
+
+
 <details>
 <summary>Result</summary>
 <img src="./docker-1.png" alt="Result">
 <img src="./docker-2.png" alt="Result">
 <img src="./docker-3.png" alt="Result">
 </details>
+
+
 - ใช้ `HTTP Method` และ `HTTP Status Code` อย่างเหมาะสม :white_check_mark:
 - ใช้ `gofmt` และ `go vet`:white_check_mark:
 - แยก Branch ของแต่ละ Story ออกจาก `main` และ Merge กลับไปยัง `main` Branch เสมอ :white_check_mark:
