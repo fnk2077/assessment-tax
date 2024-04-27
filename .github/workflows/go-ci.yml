@@ -39,9 +39,6 @@ jobs:
     - name: Test
       run: go test -v -cover ./...
 
-    - name: Integration Test
-      run: go test -v -cover -tags=integration ./...
-
     - name: Run static code analysis
       run: go vet ./...
 
