@@ -134,7 +134,7 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 
 	src, err := file.Open()
 	if err != nil {
-		return errors.New("cannot open file")
+		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid CSV file"})
 	}
 	defer src.Close()
 
@@ -147,20 +147,29 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 			break
 		}
 		if err != nil {
-			return errors.New("cannot read file")
+			return c.JSON(http.StatusBadRequest, Err{Message: "Invalid CSV file"})
 		}
 
 		totalIncome, err := strconv.ParseFloat(record[0], 64)
 		if err != nil {
 			return err
 		}
+		if totalIncome < 0.0 {
+			return c.JSON(http.StatusBadRequest, Err{Message: "total income must be more than 0"})
+		}
 		wht, err := strconv.ParseFloat(record[1], 64)
 		if err != nil {
 			return err
 		}
+		if wht < 0.0 {
+			return c.JSON(http.StatusBadRequest, Err{Message: "wht must be more than 0"})
+		}
 		donation, err := strconv.ParseFloat(record[2], 64)
 		if err != nil {
 			return err
+		}
+		if donation < 0.0 {
+			return c.JSON(http.StatusBadRequest, Err{Message: "donation amount must be equal or more than 0"})
 		}
 
 		taxCSVRequests = append(taxCSVRequests, TaxCSVRequest{
@@ -170,11 +179,6 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 		})
 	}
 
-	err = TaxCSVRequestValidation(taxCSVRequests)
-
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
-	}
 
 	taxCSVResponse, err := h.store.TaxCSVCalculate(taxCSVRequests)
 	if err != nil {
@@ -182,22 +186,6 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, taxCSVResponse)
-}
-
-func TaxCSVRequestValidation(req []TaxCSVRequest) error {
-	for _, taxCSVRequest := range req {
-		if taxCSVRequest.TotalIncome < 0.0 {
-			return errors.New("total income must be more than 0")
-		}
-		if taxCSVRequest.Wht < 0.0 {
-			return errors.New("wht must be more than 0")
-		}
-		if taxCSVRequest.Donation < 0.0 {
-			return errors.New("donation must be more than 0")
-		}
-	}
-
-	return nil
 }
 
 func TaxRequestValidation(req TaxRequest) error {

@@ -120,7 +120,7 @@ func TestTaxCalculate(t *testing.T) {
 		}
 	})
 
-	t.Run("wht -25000.0 should return error", func(t *testing.T) {
+	t.Run("WHT -25000.0 should return error", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations", io.NopCloser(strings.NewReader(
 			`{
@@ -157,6 +157,90 @@ func TestTaxCalculate(t *testing.T) {
 		}
 
 		expectedErrorMessage := "wht must be more than 0"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+	})
+
+	t.Run("Donation -25000.0 should return error", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations", io.NopCloser(strings.NewReader(
+			`{
+			"totalIncome": 150000.0,
+			"wht": 25000.0,
+			"allowances": [
+			  {
+				"allowanceType": "donation",
+				"amount": -25000.0
+			  }
+			]
+		  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		stubError := StubTax{err: echo.ErrBadRequest}
+		handler := New(&stubError)
+		handler.TaxCalculateHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "allowance amount must be equal or more than 0"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+	})
+
+	t.Run("Wrong allowance type should return error", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations", io.NopCloser(strings.NewReader(
+			`{
+			"totalIncome": 150000.0,
+			"wht": 25000.0,
+			"allowances": [
+			  {
+				"allowanceType": "dota2 47 community",
+				"amount": 25000.0
+			  }
+			]
+		  }`,
+		)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		stubError := StubTax{err: echo.ErrBadRequest}
+		handler := New(&stubError)
+		handler.TaxCalculateHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "invalid allowance type"
 		if errorMessage != expectedErrorMessage {
 			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
 		}
@@ -705,7 +789,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		}
 	})
 
-	t.Run("Test tax calculate csv with Wrong field", func(t *testing.T) {
+	t.Run("Test tax calculate csv with Wrong file fieldname", func(t *testing.T) {
 		e := echo.New()
 		body := new(bytes.Buffer)
 		writer := multipart.NewWriter(body)
@@ -734,6 +818,141 @@ func TestTaxCVSCalculate(t *testing.T) {
 		}
 	})
 
+	t.Run("Test tax CSV calculate with Wrong TotalIncome value", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,allowances\n-123.00,0.0,0.0\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest,
+		}
+
+		handler := New(&stubTax)
+		handler.TaxCVSCalculateHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "total income must be more than 0"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+
+	})
+
+	t.Run("Test tax CSV calculate with Wrong WHT value", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,allowances\n123.00,-1230.0,0.0\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest,
+		}
+
+		handler := New(&stubTax)
+		handler.TaxCVSCalculateHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "wht must be more than 0"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+
+	})
+
+	t.Run("Test tax CSV calculate with Wrong Donation value", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,allowances\n123.00,0.0,-1.0\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest,
+		}
+
+		handler := New(&stubTax)
+		handler.TaxCVSCalculateHandler(c)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expected status code %d but got %v", http.StatusBadRequest, rec.Code)
+		}
+
+		var responseBody map[string]interface{}
+		if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		errorMessage, ok := responseBody["message"].(string)
+		if !ok {
+			t.Error("expected 'message' key in response body")
+		}
+
+		expectedErrorMessage := "donation amount must be equal or more than 0"
+		if errorMessage != expectedErrorMessage {
+			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
+		}
+
+	})
+
 	t.Run("Test tax CSV calculate with Wrong Type value", func(t *testing.T) {
 		e := echo.New()
 		body := new(bytes.Buffer)
@@ -751,11 +970,11 @@ func TestTaxCVSCalculate(t *testing.T) {
 
 		c := e.NewContext(req, rec)
 
-		stubTax := StubTax{
+		stubTaxError := StubTax{
 			err: echo.ErrBadRequest,
 		}
 
-		handler := New(&stubTax)
+		handler := New(&stubTaxError)
 		if err := handler.TaxCVSCalculateHandler(c); err == nil {
 			t.Errorf("expected error but got nil")
 		}
@@ -779,11 +998,11 @@ func TestTaxCVSCalculate(t *testing.T) {
 
 		c := e.NewContext(req, rec)
 
-		stubTax := StubTax{
+		stubTaxError := StubTax{
 			err: echo.ErrBadRequest,
 		}
 
-		handler := New(&stubTax)
+		handler := New(&stubTaxError)
 		if err := handler.TaxCVSCalculateHandler(c); err == nil {
 			t.Errorf("expected error but got nil")
 		}
@@ -807,11 +1026,11 @@ func TestTaxCVSCalculate(t *testing.T) {
 
 		c := e.NewContext(req, rec)
 
-		stubTax := StubTax{
+		stubTaxError := StubTax{
 			err: echo.ErrBadRequest,
 		}
 
-		handler := New(&stubTax)
+		handler := New(&stubTaxError)
 		if err := handler.TaxCVSCalculateHandler(c); err == nil {
 			t.Errorf("expected error but got nil")
 		}
