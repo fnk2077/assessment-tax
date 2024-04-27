@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,7 +35,7 @@ func (s *StubTax) TaxCSVCalculate([]TaxCSVRequest) (TaxCSVResponse, error) {
 }
 func TestTaxCalculate(t *testing.T) {
 
-	t.Run("Test tax calculate with total income 150000.0 (รายได้ 0 - 150,000 ได้รับการยกเว้น)", func(t *testing.T) {
+	t.Run("Income 150000.0 should return 0", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations", io.NopCloser(strings.NewReader(
 			`{
@@ -77,7 +78,7 @@ func TestTaxCalculate(t *testing.T) {
 		assert.Equal(t, expected, got)
 	})
 
-	t.Run("Test tax calculate with total income -150000.0 should return error", func(t *testing.T) {
+	t.Run("Income -150000.0 should return error", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations", io.NopCloser(strings.NewReader(
 			`{
@@ -119,12 +120,12 @@ func TestTaxCalculate(t *testing.T) {
 		}
 	})
 
-	t.Run("Test tax calculate with total wht -25000.0 should return error", func(t *testing.T) {
+	t.Run("wht -25000.0 should return error", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations", io.NopCloser(strings.NewReader(
 			`{
 			"totalIncome": 150000.0,
-			"wht": -25000.0,
+			"wht": -25000.0
 			"allowances": [
 			  {
 				"allowanceType": "donation",
@@ -161,7 +162,7 @@ func TestTaxCalculate(t *testing.T) {
 		}
 	})
 
-	t.Run("Test tax calculate with total money 150000.0 should return error", func(t *testing.T) {
+	t.Run("Money 150000.0 should return error(Invalid request body)", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations", io.NopCloser(strings.NewReader(
 			`{
@@ -240,7 +241,7 @@ func TestTaxCalculate(t *testing.T) {
 }
 
 func TestChangeDeduction(t *testing.T) {
-	t.Run("Test change Personal deduction amount 100,000.00", func(t *testing.T) {
+	t.Run("Change Personal deduction amount 100,000.00 should return 100,000.00", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
@@ -281,7 +282,7 @@ func TestChangeDeduction(t *testing.T) {
 		}
 	})
 
-	t.Run("Test change Personal deduction amount 10,001.00", func(t *testing.T) {
+	t.Run("Change Personal deduction amount 10,001.00 should return 10,001.0", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
@@ -322,7 +323,7 @@ func TestChangeDeduction(t *testing.T) {
 		}
 	})
 
-	t.Run("Test change Personal deduction amount 100,001.00(exceed 100,000.0)", func(t *testing.T) {
+	t.Run("Change Personal deduction amount 100,001.00 should return error (exceed 100,000.0)", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
@@ -363,7 +364,7 @@ func TestChangeDeduction(t *testing.T) {
 		}
 	})
 
-	t.Run("Test change Personal deduction amount 10,000 (must more than 10.000)", func(t *testing.T) {
+	t.Run("Change Personal deduction amount 10,000 (must be more than 10.000)", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
@@ -403,7 +404,7 @@ func TestChangeDeduction(t *testing.T) {
 			t.Errorf("expected '%s' but got '%s'", expectedErrorMessage, errorMessage)
 		}
 	})
-	t.Run("Test change Max K-receipt deduction amount 1.00", func(t *testing.T) {
+	t.Run("Change Max K-receipt deduction amount 1.00 should return 1.00", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
@@ -444,7 +445,7 @@ func TestChangeDeduction(t *testing.T) {
 		}
 	})
 
-	t.Run("Test change Max K-receipt deduction amount 100,001.00(exceed 100,000.0)", func(t *testing.T) {
+	t.Run("Change Max K-receipt deduction amount 100,001.00 should return error (exceed 100,000.0)", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
@@ -485,7 +486,7 @@ func TestChangeDeduction(t *testing.T) {
 		}
 	})
 
-	t.Run("Test change Max K-receipt deduction amount 0.00(must more than 0.0)", func(t *testing.T) {
+	t.Run("Change Max K-receipt deduction amount 0.00 should return error (must be more than 0.0)", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
@@ -526,7 +527,7 @@ func TestChangeDeduction(t *testing.T) {
 		}
 	})
 
-	t.Run("Test Deduction Invalid request body", func(t *testing.T) {
+	t.Run("Invalid deduction request body", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{
@@ -567,7 +568,7 @@ func TestChangeDeduction(t *testing.T) {
 		}
 	})
 
-	t.Run("Test Deduction Invalid deduction type", func(t *testing.T) {
+	t.Run("Invalid deduction type", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/", io.NopCloser(strings.NewReader(
 			`{

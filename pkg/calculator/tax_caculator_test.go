@@ -9,11 +9,11 @@ import (
 
 func TestTaxCalculator(t *testing.T) {
 
-	t.Run("Test tax calculator with total income 149000 (รายได้ 0 - 150,000 ได้รับการยกเว้น)", func(t *testing.T) {
+	t.Run("Income 149,999.0 should return Tax 0.0", func(t *testing.T) {
 		//Arrange
 		want := 0.0
 		req := tax.TaxRequest{
-			TotalIncome: 149000.0,
+			TotalIncome: 149999.0,
 		}
 
 		//Act
@@ -23,7 +23,7 @@ func TestTaxCalculator(t *testing.T) {
 		assert.Equal(t, want, got.Tax)
 	})
 
-	t.Run("Test tax calculator with total income 210001 (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T) {
+	t.Run("Income 210,001.0 should return Tax 0.1", func(t *testing.T) {
 		//Arrange
 		want := 0.1
 		req := tax.TaxRequest{
@@ -37,7 +37,7 @@ func TestTaxCalculator(t *testing.T) {
 		assert.Equal(t, want, got.Tax)
 	})
 
-	t.Run("Test tax calculator with total income 500,000 wth 25,000 (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T) {
+	t.Run("Income 500,000 WTH 25,000 should return Tax 4000.0", func(t *testing.T) {
 		//Arrange
 		want := 4000.0
 		req := tax.TaxRequest{
@@ -51,7 +51,7 @@ func TestTaxCalculator(t *testing.T) {
 		assert.Equal(t, want, got.Tax)
 	})
 
-	t.Run("Test tax calculator with total income 500,000 donation amount 200,000 (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T) {
+	t.Run("Income 500,000.0 Donation 200,000.0 should return 19,000.0", func(t *testing.T) {
 		//Arrange
 		want := 19000.0
 		req := tax.TaxRequest{
@@ -71,7 +71,7 @@ func TestTaxCalculator(t *testing.T) {
 		assert.Equal(t, want, got.Tax)
 	})
 
-	t.Run("Test tax calculator with total income 500,000 donation amount 50,000 (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T) {
+	t.Run("Income 500,000.0 Donation 50,000.0 should return 24,000.0", func(t *testing.T) {
 		//Arrange
 		want := 24000.0
 		req := tax.TaxRequest{
@@ -91,7 +91,7 @@ func TestTaxCalculator(t *testing.T) {
 		assert.Equal(t, want, got.Tax)
 	})
 
-	t.Run("Test tax calculator with total income 500,000 k-receipt amount 100,000(max 50,000) (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T) {
+	t.Run("Income 500,000.0 K-Receipt 100,000.0 should return 24,000.0", func(t *testing.T) {
 		//Arrange
 		want := 24000.0
 		req := tax.TaxRequest{
@@ -111,7 +111,7 @@ func TestTaxCalculator(t *testing.T) {
 		assert.Equal(t, want, got.Tax)
 	})
 
-	t.Run("Test tax calculator with total income 500,000 k-receipt amount 40,000(max 50,000) (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T) {
+	t.Run("Income 500,000.0 K-receipt 40,000.0 should return 25,000.0", func(t *testing.T) {
 		//Arrange
 		want := 25000.0
 		req := tax.TaxRequest{
@@ -131,7 +131,7 @@ func TestTaxCalculator(t *testing.T) {
 		assert.Equal(t, want, got.Tax)
 	})
 
-	t.Run("Test tax calculator with total income 500,000 k-receipt wth 25,000 amount 40,000(max 50,000) (150,001 - 500,000 อัตราภาษี 10%)", func(t *testing.T) {
+	t.Run("Income 400,000.0 WTH 25,000.0 Donation 100,000.0 K-receipt 40,000.0 should return 21,000.0", func(t *testing.T) {
 		//Arrange
 		want := 21000.0
 		req := tax.TaxRequest{

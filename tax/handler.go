@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-
 	"github.com/labstack/echo/v4"
 )
 
@@ -49,7 +48,7 @@ func (h *Handler) TaxCalculateHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
 	}
 
-	err := validateInput(req)
+	err := TaxRequestValidation(req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
@@ -179,12 +178,23 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, taxCSVResponse)
 }
 
-func validateInput(req TaxRequest) error {
+
+func TaxRequestValidation(req TaxRequest) error {
 	if req.TotalIncome < 0.0 {
 		return errors.New("total income must be more than 0")
 	}
 	if req.Wht < 0.0 {
 		return errors.New("wht must be more than 0")
 	}
+
+	for _, allowance := range req.Allowances {
+		if allowance.Amount < 0.0 {
+			return errors.New("allowance amount must be equal or more than 0")
+		}
+		if allowance.AllowanceType != "donation" && allowance.AllowanceType != "k-receipt" {
+			return errors.New("invalid allowance type")
+		}
+	}
+
 	return nil
 }
