@@ -125,7 +125,7 @@ func TestTaxCalculate(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/tax/calculations", io.NopCloser(strings.NewReader(
 			`{
 			"totalIncome": 150000.0,
-			"wht": -25000.0
+			"wht": -25000.0,
 			"allowances": [
 			  {
 				"allowanceType": "donation",
