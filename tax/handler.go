@@ -3,7 +3,7 @@ package tax
 import (
 	"encoding/csv"
 	"errors"
-	"fmt"
+
 	"reflect"
 
 	"io"
@@ -64,54 +64,53 @@ func (h *Handler) TaxCalculateHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-// Change deduction from request.
+// ChangeDeductionHandler changes deduction based on the provided data.
 //
-// @Summary Change deduction from request
-// @Description Change deduction from request based on the provided data
+// @Summary Change deduction
+// @Description Change deduction based on the provided data
 // @Tags tax
 // @Accept json
 // @Produce json
 // @Param type path string true "Type of deduction: personal or k-receipt"
-// @Param amount body float64 true "Amount to be deducted"
-// @Success 201 {object} map[string]float64 "Returns the updated deduction"
+// @Param amount body DeductionRequest true "Amount to be deducted"
+// @Success 200 {object} map[string]float64 "Returns the updated deduction"
 // @Router /admin/deductions/{type} [post]
 // @Failure 400 {object} Err "Bad Request"
-// @Failure 500 {object} Err "Internal Server Error
+// @Failure 500 {object} Err "Internal Server Error"
 func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
-	req := struct {
-		Amount float64 `json:"amount"`
-	}{}
-	if err := c.Bind(&req); err != nil {
+	var deductionRequest DeductionRequest
+
+	if err := c.Bind(&deductionRequest); err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid request body"})
 	}
 
 	deductionType := c.Param("type")
 	var response map[string]float64
 	if deductionType == "personal" {
-		response = map[string]float64{"personalDeduction": req.Amount}
+		response = map[string]float64{"personalDeduction": deductionRequest.Amount}
 
-		if req.Amount <= 10000 {
+		if deductionRequest.Amount <= 10000 {
 			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 10,000"})
 		}
 
-		if req.Amount > 100000 {
+		if deductionRequest.Amount > 100000 {
 			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must not exceed 100,000"})
 		}
 	} else if deductionType == "k-receipt" {
-		response = map[string]float64{"kReceipt": req.Amount}
+		response = map[string]float64{"kReceipt": deductionRequest.Amount}
 
-		if req.Amount <= 0 {
+		if deductionRequest.Amount <= 0 {
 			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must be more than 0"})
 		}
 
-		if req.Amount > 100000 {
+		if deductionRequest.Amount > 100000 {
 			return c.JSON(http.StatusBadRequest, Err{Message: "Amount must not exceed 100,000"})
 		}
 	} else {
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid deduction type"})
 	}
 
-	h.store.ChangeDeduction(req.Amount, deductionType)
+	h.store.ChangeDeduction(deductionRequest.Amount, deductionType)
 
 	return c.JSON(http.StatusOK, response)
 }
@@ -150,7 +149,6 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 
 	expectedHeader := []string{"totalIncome", "wht", "donation"}
 	if !reflect.DeepEqual(header, expectedHeader) {
-		fmt.Println(header, expectedHeader)
 		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid CSV file: incorrect header format"})
 	}
 

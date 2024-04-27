@@ -6,6 +6,11 @@ definitions:
       amount:
         type: number
     type: object
+  tax.DeductionRequest:
+    properties:
+      amount:
+        type: number
+    type: object
   tax.Err:
     properties:
       message:
@@ -65,7 +70,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Change deduction from request based on the provided data
+      description: Change deduction based on the provided data
       parameters:
       - description: 'Type of deduction: personal or k-receipt'
         in: path
@@ -77,11 +82,11 @@ paths:
         name: amount
         required: true
         schema:
-          type: number
+          $ref: '#/definitions/tax.DeductionRequest'
       produces:
       - application/json
       responses:
-        "201":
+        "200":
           description: Returns the updated deduction
           schema:
             additionalProperties:
@@ -95,7 +100,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/tax.Err'
-      summary: Change deduction from request
+      summary: Change deduction
       tags:
       - tax
   /tax/calculations:

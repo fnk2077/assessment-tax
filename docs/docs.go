@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/admin/deductions/{type}": {
             "post": {
-                "description": "Change deduction from request based on the provided data",
+                "description": "Change deduction based on the provided data",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,7 +27,7 @@ const docTemplate = `{
                 "tags": [
                     "tax"
                 ],
-                "summary": "Change deduction from request",
+                "summary": "Change deduction",
                 "parameters": [
                     {
                         "type": "string",
@@ -42,12 +42,12 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "number"
+                            "$ref": "#/definitions/tax.DeductionRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Returns the updated deduction",
                         "schema": {
                             "type": "object",
@@ -166,6 +166,14 @@ const docTemplate = `{
                 "allowanceType": {
                     "type": "string"
                 },
+                "amount": {
+                    "type": "number"
+                }
+            }
+        },
+        "tax.DeductionRequest": {
+            "type": "object",
+            "properties": {
                 "amount": {
                     "type": "number"
                 }

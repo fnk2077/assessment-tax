@@ -17,6 +17,11 @@ type TaxRequest struct {
 	Allowances  []Allowance `json:"allowances"`
 }
 
+type DeductionRequest struct {
+	Amount float64 `json:"amount"`
+}
+
+
 type TaxResponse struct {
 	Tax       float64    `json:"tax"`
 	TaxRefund float64    `json:"taxRefund,omitempty"`
