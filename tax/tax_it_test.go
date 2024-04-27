@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +22,10 @@ import (
 const serverPort = 8080
 
 func TestITTaxCalculate(t *testing.T) {
+
+	if err := godotenv.Load("../.env"); err != nil {
+		t.Fatalf("Error loading .env file: %v", err)
+	}
 
 	t.Run("given user able to calculate tax should return tax", func(t *testing.T) {
 		reqBody := `{
@@ -126,43 +130,82 @@ func TestITTaxCalculate(t *testing.T) {
 		assert.Equal(t, taxCSVResponse.Taxes, result.Taxes)
 	})
 
-	// t.Run("given admin able to change personal deduction", func(t *testing.T) {
-	// 	reqBody := `{"amount": 60000.0}`
+	t.Run("given admin able to change personal deduction", func(t *testing.T) {
+		reqBody := `{"amount": 60000.0}`
 
-	// 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:%d/admin/deductions/personal", serverPort), strings.NewReader(reqBody))
-	// 	if err != nil {
-	// 		t.Fatal(err)
-	// 	}
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:%d/admin/deductions/personal", serverPort), strings.NewReader(reqBody))
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	// 	// fmt.Println("Heloooooooooooooooooooo", os.Getenv("ADMIN_USERNAME"), os.Getenv("ADMIN_PASSWORD"))
-	// 	// fmt.Println(os.Environ())
-	// 	req.SetBasicAuth( os.Getenv("ADMIN_USERNAME"), os.Getenv("ADMIN_PASSWORD"))
-	// 	// req.SetBasicAuth("adminTax", "admin!")
-	
-	// 	req.Header.Set("Content-Type", "application/json")
-	
-	// 	client := &http.Client{}
-	// 	resp, err := client.Do(req)
-	// 	if err != nil {
-	// 		t.Fatal(err)
-	// 	}
-	// 	defer resp.Body.Close()
-	
-	// 	if resp.StatusCode != http.StatusOK {
-	// 		t.Fatalf("unexpected status code: %d", resp.StatusCode)
-	// 	}
-	
-	// 	body, err := io.ReadAll(resp.Body)
-	// 	if err != nil {
-	// 		t.Fatal(err)
-	// 	}
-	
-	// 	var result map[string]float64
-	// 	err = json.Unmarshal(body, &result)
-	// 	if err != nil {
-	// 		t.Errorf("error decoding response body: %v", err)
-	// 	}
-	
-	// 	fmt.Println("Decoded result:", result)
-	// })
+		req.SetBasicAuth(os.Getenv("ADMIN_USERNAME"), os.Getenv("ADMIN_PASSWORD"))
+
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("unexpected status code: %d", resp.StatusCode)
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var result map[string]float64
+		err = json.Unmarshal(body, &result)
+		if err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		expect := map[string]float64{"personalDeduction": 60000.0}
+
+		assert.Equal(t, expect, result)
+	})
+
+	t.Run("given admin able to change k-receipt deduction", func(t *testing.T) {
+		reqBody := `{"amount": 50000.0}`
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:%d/admin/deductions/k-receipt", serverPort), strings.NewReader(reqBody))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		req.SetBasicAuth(os.Getenv("ADMIN_USERNAME"), os.Getenv("ADMIN_PASSWORD"))
+
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("unexpected status code: %d", resp.StatusCode)
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var result map[string]float64
+		err = json.Unmarshal(body, &result)
+		if err != nil {
+			t.Errorf("error decoding response body: %v", err)
+		}
+
+		expect := map[string]float64{"kReceipt": 50000.0}
+
+		assert.Equal(t, expect, result)
+
+	})
 }
