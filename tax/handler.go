@@ -170,6 +170,12 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 		})
 	}
 
+	err = TaxCSVRequestValidation(taxCSVRequests)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
+	}
+
 	taxCSVResponse, err := h.store.TaxCSVCalculate(taxCSVRequests)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, Err{Message: "Internal server error"})
@@ -178,6 +184,21 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, taxCSVResponse)
 }
 
+func TaxCSVRequestValidation(req []TaxCSVRequest) error {
+	for _, taxCSVRequest := range req {
+		if taxCSVRequest.TotalIncome < 0.0 {
+			return errors.New("total income must be more than 0")
+		}
+		if taxCSVRequest.Wht < 0.0 {
+			return errors.New("wht must be more than 0")
+		}
+		if taxCSVRequest.Donation < 0.0 {
+			return errors.New("donation must be more than 0")
+		}
+	}
+
+	return nil
+}
 
 func TaxRequestValidation(req TaxRequest) error {
 	if req.TotalIncome < 0.0 {
