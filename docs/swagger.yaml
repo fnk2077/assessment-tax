@@ -11,6 +11,31 @@ definitions:
       message:
         type: string
     type: object
+  tax.TaxCSVResponse:
+    properties:
+      taxes:
+        items:
+          $ref: '#/definitions/tax.TaxCSVResponseDetail'
+        type: array
+    type: object
+  tax.TaxCSVResponseDetail:
+    properties:
+      tax:
+        type: number
+      taxRefund:
+        type: number
+      totalIncome:
+        type: number
+    type: object
+  tax.TaxLevel:
+    properties:
+      level:
+        type: string
+      tax:
+        type: number
+      taxRefund:
+        type: number
+    type: object
   tax.TaxRequest:
     properties:
       allowances:
@@ -22,9 +47,57 @@ definitions:
       wht:
         type: number
     type: object
+  tax.TaxResponse:
+    properties:
+      tax:
+        type: number
+      taxLevel:
+        items:
+          $ref: '#/definitions/tax.TaxLevel'
+        type: array
+      taxRefund:
+        type: number
+    type: object
 info:
   contact: {}
 paths:
+  /admin/deductions/{type}:
+    post:
+      consumes:
+      - application/json
+      description: Change deduction from request based on the provided data
+      parameters:
+      - description: 'Type of deduction: personal or k-receipt'
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: Amount to be deducted
+        in: body
+        name: amount
+        required: true
+        schema:
+          type: number
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Returns the updated deduction
+          schema:
+            additionalProperties:
+              type: number
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tax.Err'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/tax.Err'
+      summary: Change deduction from request
+      tags:
+      - tax
   /tax/calculations:
     post:
       consumes:
@@ -41,9 +114,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Returns the tax calculation
           schema:
-            $ref: '#/definitions/tax.TaxRequest'
+            $ref: '#/definitions/tax.TaxResponse'
         "400":
           description: Bad Request
           schema:
@@ -53,6 +126,33 @@ paths:
           schema:
             $ref: '#/definitions/tax.Err'
       summary: Calculate tax from request
+      tags:
+      - tax
+  /tax/calculations/upload-csv:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Calculate tax based on the data provided in a CSV file
+      parameters:
+      - description: CSV file containing tax data
+        in: formData
+        name: taxFile
+        required: true
+        type: file
+      responses:
+        "200":
+          description: Returns the calculated tax
+          schema:
+            $ref: '#/definitions/tax.TaxCSVResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tax.Err'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/tax.Err'
+      summary: Calculate tax from CSV file
       tags:
       - tax
 swagger: "2.0"

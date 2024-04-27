@@ -39,10 +39,10 @@ type Err struct {
 // @Accept json
 // @Produce json
 // @Param request body TaxRequest true "Tax data"
-// @Success 201 {object} TaxRequest
+// @Success 201 {object} TaxResponse "Returns the tax calculation"
 // @Router /tax/calculations [post]
-// @Failure 400 {object} Err
-// @Failure 500 {object} Err
+// @Failure 400 {object} Err "Bad Request"
+// @Failure 500 {object} Err "Internal Server Error"
 func (h *Handler) TaxCalculateHandler(c echo.Context) error {
 	var req TaxRequest
 	if err := c.Bind(&req); err != nil {
@@ -62,6 +62,19 @@ func (h *Handler) TaxCalculateHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// Change deduction from request.
+//
+// @Summary Change deduction from request
+// @Description Change deduction from request based on the provided data
+// @Tags tax
+// @Accept json
+// @Produce json
+// @Param type path string true "Type of deduction: personal or k-receipt"
+// @Param amount body float64 true "Amount to be deducted"
+// @Success 201 {object} map[string]float64 "Returns the updated deduction"
+// @Router /admin/deductions/{type} [post]
+// @Failure 400 {object} Err "Bad Request"
+// @Failure 500 {object} Err "Internal Server Error
 func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
 	req := struct {
 		Amount float64 `json:"amount"`
@@ -101,6 +114,17 @@ func (h *Handler) ChangeDeductionHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// TaxCVSCalculateHandler calculates tax from CSV file.
+//
+// @Summary Calculate tax from CSV file
+// @Description Calculate tax based on the data provided in a CSV file
+// @Tags tax
+// @Accept multipart/form-data
+// @Param taxFile formData file true "CSV file containing tax data"
+// @Success 200 {object} TaxCSVResponse "Returns the calculated tax"
+// @Router /tax/calculations/upload-csv [post]
+// @Failure 400 {object} Err "Bad Request"
+// @Failure 500 {object} Err "Internal Server Error"
 func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 	var taxCSVRequests []TaxCSVRequest
 

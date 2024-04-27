@@ -15,6 +15,62 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/deductions/{type}": {
+            "post": {
+                "description": "Change deduction from request based on the provided data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tax"
+                ],
+                "summary": "Change deduction from request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Type of deduction: personal or k-receipt",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Amount to be deducted",
+                        "name": "amount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Returns the updated deduction",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "number"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    }
+                }
+            }
+        },
         "/tax/calculations": {
             "post": {
                 "description": "Calculate tax from request based on the provided data",
@@ -41,9 +97,50 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Returns the tax calculation",
                         "schema": {
-                            "$ref": "#/definitions/tax.TaxRequest"
+                            "$ref": "#/definitions/tax.TaxResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    }
+                }
+            }
+        },
+        "/tax/calculations/upload-csv": {
+            "post": {
+                "description": "Calculate tax based on the data provided in a CSV file",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "tags": [
+                    "tax"
+                ],
+                "summary": "Calculate tax from CSV file",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "CSV file containing tax data",
+                        "name": "taxFile",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns the calculated tax",
+                        "schema": {
+                            "$ref": "#/definitions/tax.TaxCSVResponse"
                         }
                     },
                     "400": {
@@ -82,6 +179,45 @@ const docTemplate = `{
                 }
             }
         },
+        "tax.TaxCSVResponse": {
+            "type": "object",
+            "properties": {
+                "taxes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tax.TaxCSVResponseDetail"
+                    }
+                }
+            }
+        },
+        "tax.TaxCSVResponseDetail": {
+            "type": "object",
+            "properties": {
+                "tax": {
+                    "type": "number"
+                },
+                "taxRefund": {
+                    "type": "number"
+                },
+                "totalIncome": {
+                    "type": "number"
+                }
+            }
+        },
+        "tax.TaxLevel": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "type": "string"
+                },
+                "tax": {
+                    "type": "number"
+                },
+                "taxRefund": {
+                    "type": "number"
+                }
+            }
+        },
         "tax.TaxRequest": {
             "type": "object",
             "properties": {
@@ -98,23 +234,41 @@ const docTemplate = `{
                     "type": "number"
                 }
             }
+        },
+        "tax.TaxResponse": {
+            "type": "object",
+            "properties": {
+                "tax": {
+                    "type": "number"
+                },
+                "taxLevel": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tax.TaxLevel"
+                    }
+                },
+                "taxRefund": {
+                    "type": "number"
+                }
+            }
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:8080",
+	Version:          "",
+	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Tax API",
-	Description:      "Calculate tax from request based on the provided data",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
 	RightDelim:       "}}",
 }
+
 func init() {
 	swag.Register(SwaggerInfo.InstanceName(), SwaggerInfo)
 }
