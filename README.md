@@ -42,9 +42,9 @@ K-Tax เป็น Application คำนวนภาษี ที่ให้ผ
 - ใช้ `docker compose` สำหรับต่อ Database :white_check_mark:
 - API support `Graceful Shutdown` :white_check_mark:
   - เช่น ถ้ามีการกด `Ctrl + C` จะ print `shutting down the server`
-- มี Dockerfile สำหรับ build image และเป็น `Multi-stage build`
-- ใช้ `HTTP Method` และ `HTTP Status Code` อย่างเหมาะสม
-- ใช้ `gofmt` และ `go vet`
+- มี Dockerfile สำหรับ build image และเป็น `Multi-stage build` :white_check_mark:
+- ใช้ `HTTP Method` และ `HTTP Status Code` อย่างเหมาะสม :white_check_mark:
+- ใช้ `gofmt` และ `go vet`:white_check_mark:
 - แยก Branch ของแต่ละ Story ออกจาก `main` และ Merge กลับไปยัง `main` Branch เสมอ :white_check_mark:
   - เช่น story ที่ 1 จะใช้ branch ชื่อ `feature/story-1` หรือ `feature/store-1-create-tax-calculation`
 - admin กำหนด Basic authen ด้วย username: `adminTax`, password: `admin!`:white_check_mark:
@@ -65,10 +65,10 @@ K-Tax เป็น Application คำนวนภาษี ที่ให้ผ
 - ไม่มีเก็บข้อมูลภาษีของผู้ใช้งาน :white_check_mark:
 - อัตราภาษีไม่มีการเปลี่ยนแปลงในอนาคต 
 - ค่าลดหย่อนมีได้ 3 ชนิดเท่านั้น ค่าลดหย่อนส่วนตัว/เงินบริจาค/ช้อปปลดภาษี 
-- ค่าลดหย่อนที่จะส่งเข้ามาคำนวนไม่มีค่าน้อยกว่า 0 :red_circle:
-- ข้อมูล wht ที่จะถูกส่งเข้ามาคำนวน ไม่สามารถมีค่าน้อยกว่า 0 หรือมากกว่ารายรับได้ :red_circle:
-- csv ที่รับเข้ามา ต้องใช้ชื่อตามที่กำหนดให้ และมีโครงสร้างข้อมูลตามตัวอย่างเท่านั้น :red_circle:
-- ข้อมูลที่รับเข้ามา ต้องผ่านการตรวจสอบความถูกต้องและความสมบูรณ์ก่อนการคำนวน :red_circle:
+- ค่าลดหย่อนที่จะส่งเข้ามาคำนวนไม่มีค่าน้อยกว่า 0 :white_check_mark:
+- ข้อมูล wht ที่จะถูกส่งเข้ามาคำนวน ไม่สามารถมีค่าน้อยกว่า 0 หรือมากกว่ารายรับได้ :white_check_mark:
+- csv ที่รับเข้ามา ต้องใช้ชื่อตามที่กำหนดให้ และมีโครงสร้างข้อมูลตามตัวอย่างเท่านั้น :white_check_mark:
+- ข้อมูลที่รับเข้ามา ต้องผ่านการตรวจสอบความถูกต้องและความสมบูรณ์ก่อนการคำนวน :white_check_mark:
 
 ## Stories Note
 
