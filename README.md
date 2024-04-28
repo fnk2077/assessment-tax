@@ -288,6 +288,7 @@ Response body
 ----
 <details>
 <summary>Result</summary>
+(Branch main)
 <img src="./story-4.png" alt="Result">
 </details>
 ### Story: EXP05 :white_check_mark:
@@ -314,6 +315,7 @@ Response body
 ```
 <details>
 <summary>Result</summary>
+(Branch main)
 <img src="./story-5.png" alt="Result">
 </details>
 
@@ -353,6 +355,7 @@ Response body
 ```
 <details>
 <summary>Result</summary>
+(Branch main)
 <img src="./story-6.png" alt="Result">
 </details>
 -------
@@ -427,6 +430,7 @@ Response body
 </details>
 <details>
 <summary>Result</summary>
+(Branch main)
 <img src="./story-7.png" alt="Result">
 </details>
 ----
@@ -455,6 +459,7 @@ Response body
 ```
 <details>
 <summary>Result</summary>
+(Branch main)
 <img src="./story-8.png" alt="Result">
 </details>
 ----
