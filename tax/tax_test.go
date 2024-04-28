@@ -3,7 +3,6 @@ package tax
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -789,7 +788,7 @@ func TestTaxCVSCalculate(t *testing.T) {
 		}
 	})
 
-	t.Run("Test tax calculate csv with Wrong file fieldname", func(t *testing.T) {
+	t.Run("Test tax calculate csv with Wrong csv file Key", func(t *testing.T) {
 		e := echo.New()
 		body := new(bytes.Buffer)
 		writer := multipart.NewWriter(body)
@@ -812,10 +811,68 @@ func TestTaxCVSCalculate(t *testing.T) {
 
 		handler := New(&stubTax)
 		err = handler.TaxCVSCalculateHandler(c)
-		expectedError := errors.New("http: no such file")
-		if err.Error() != expectedError.Error() {
-			t.Errorf("expect %v but got %v", expectedError, err)
+
+		if err != nil {
+			t.Errorf("expect nil but got %v", err)
 		}
+
+		actual := rec.Body.String()
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expect %d but got %d", http.StatusBadRequest, rec.Code)
+		}
+		var got map[string]interface{}
+		if err := json.Unmarshal([]byte(actual), &got); err != nil {
+			t.Errorf("expect nil but got %v", err)
+		}
+
+		expected := map[string]interface{}{
+			"message": "Invalid CSV file Key",
+		}
+
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("Test tax calculate csv with Wrong filename", func(t *testing.T) {
+		e := echo.New()
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("taxFile", "taxesza.csv")
+		if err != nil {
+			t.Errorf("create form file error: %v", err)
+		}
+		part.Write([]byte("totalIncome,wht,donation\n150000.0,0.0,0.0\n"))
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/tax/calculations/upload-csv", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		stubTax := StubTax{
+			err: echo.ErrBadRequest,
+		}
+
+		handler := New(&stubTax)
+		err = handler.TaxCVSCalculateHandler(c)
+
+		if err != nil {
+			t.Errorf("expect nil but got %v", err)
+		}
+
+		actual := rec.Body.String()
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("expect %d but got %d", http.StatusBadRequest, rec.Code)
+		}
+		var got map[string]interface{}
+		if err := json.Unmarshal([]byte(actual), &got); err != nil {
+			t.Errorf("expect nil but got %v", err)
+		}
+
+		expected := map[string]interface{}{
+			"message": "Invalid CSV file name or file not found",
+		}
+		assert.Equal(t, expected, got)
 	})
 
 	t.Run("Test tax CSV calculate with Wrong TotalIncome value", func(t *testing.T) {

@@ -131,12 +131,12 @@ func (h *Handler) TaxCVSCalculateHandler(c echo.Context) error {
 
 	file, err := c.FormFile("taxFile")
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid CSV file Key"})
 	}
 
 	src, err := file.Open()
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid CSV file: cannot open file"})
+	if err != nil || file.Filename != "taxes.csv" {
+		return c.JSON(http.StatusBadRequest, Err{Message: "Invalid CSV file name or file not found"})
 	}
 	defer src.Close()
 
