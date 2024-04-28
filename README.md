@@ -92,7 +92,7 @@ K-Tax เป็น Application คำนวนภาษี ที่ให้ผ
 
 ## User stories
 
-### Story: EXP01
+### Story: EXP01 :white_check_mark:
 
 ```
 * As user, I want to calculate my tax
@@ -142,7 +142,7 @@ Response body
 
 
 -------
-### Story: EXP02
+### Story: EXP02 :white_check_mark:
 
 ```
 * As user, I want to calculate my tax with WHT
@@ -184,7 +184,7 @@ Response body
 <img src="./story-2.png" alt="Result">
 </details>
 -------
-### Story: EXP03
+### Story: EXP03 :white_check_mark:
 
 ```
 * As user, I want to calculate my tax
@@ -234,7 +234,7 @@ Response body
 </details>
 
 -------
-### Story: EXP04
+### Story: EXP04 :white_check_mark:
 
 ```
 * As user, I want to calculate my tax with tax level detail
@@ -290,7 +290,7 @@ Response body
 <summary>Result</summary>
 <img src="./story-4.png" alt="Result">
 </details>
-### Story: EXP05
+### Story: EXP05 :white_check_mark:
 
 ```
 * As admin, I want to setting personal deduction
@@ -319,7 +319,7 @@ Response body
 
 ----
 
-### Story: EXP06
+### Story: EXP06 :white_check_mark:
 
 ```
 * As user, I want to calculate my tax with csv
@@ -356,7 +356,7 @@ Response body
 <img src="./story-6.png" alt="Result">
 </details>
 -------
-### Story: EXP07
+### Story: EXP07 :white_check_mark:
 
 ```
 * As user, I want to calculate my tax with tax level detail
@@ -431,7 +431,7 @@ Response body
 </details>
 ----
 
-### Story: EXP08
+### Story: EXP08 :white_check_mark:
 
 ```
 * As admin, I want to setting k-receipt deduction
